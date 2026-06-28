@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>maleFOOTfantasy — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root {
+    --ink: #0a0a0a;
+    --panel: #0f0d0b;
+    --card: #141210;
+    --card2: #1a1714;
+    --paper: #f5f0eb;
+    --ash: #8a8278;
+    --gold: #b8963e;
+    --gold-light: #d4ac5a;
+    --warm-white: #faf7f3;
+    --border: rgba(184,150,62,0.18);
+    --border-strong: rgba(184,150,62,0.45);
+    --text-dim: #5a5550;
+    --green: #4caf7d;
+    --red: #e05555;
+    --amber: #d4943a;
+    --sidebar-w: 220px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  /* ─── LOGIN SCREEN ─── */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-screen.hidden { display: none; }
+  .login-box {
+    width: 360px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 2.5rem 2rem;
+    background: var(--card);
+  }
+  .login-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem; letter-spacing: 0.25em;
+    color: var(--gold); margin-bottom: 0.3rem;
+  }
+  .login-logo span { color: var(--paper); font-style: italic; }
+  .login-sub {
+    font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 2rem;
+  }
+  .login-field { margin-bottom: 1rem; }
+  .login-field label {
+    display: block; font-size: 0.62rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--ash); margin-bottom: 0.4rem;
+  }
+  .login-field input {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); color: var(--paper);
+    font-family: inherit; font-size: 0.85rem;
+    padding: 0.65rem 0.9rem; border-radius: 3px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-field input:focus { border-color: var(--gold); }
+  .login-btn {
+    width: 100%; padding: 0.75rem;
+    background: var(--gold); color: var(--ink);
+    border: none; font-family: inherit;
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; border-radius: 3px; margin-top: 0.5rem;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: var(--gold-light); }
+  .login-err {
+    font-size: 0.72rem; color: var(--red);
+    margin-top: 0.6rem; display: none;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: var(--sidebar-w); flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 1.4rem 1.4rem 1rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; letter-spacing: 0.2em;
+    color: var(--gold); border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo span { color: var(--paper); font-style: italic; }
+  .sidebar-badge {
+    font-size: 0.52rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-dim); margin-top: 0.2rem;
+  }
+  .sidebar-nav { flex: 1; padding: 1rem 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.65rem 1.4rem;
+    font-size: 0.75rem; letter-spacing: 0.08em;
+    color: var(--ash); cursor: pointer;
+    transition: color 0.18s, background 0.18s;
+    border-left: 2px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--paper); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: rgba(184,150,62,0.06); }
+  .nav-item .icon { width: 16px; text-align: center; font-size: 0.85rem; }
+  .nav-badge {
+    margin-left: auto;
+    background: var(--red); color: #fff;
+    font-size: 0.58rem; padding: 0.15rem 0.4rem;
+    border-radius: 100px; font-weight: 500;
+  }
+  .nav-badge.amber { background: var(--amber); }
+  .sidebar-footer {
+    padding: 1rem 1.4rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem; color: var(--text-dim);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logout-btn {
+    background: none; border: none; color: var(--text-dim);
+    font-size: 0.65rem; cursor: pointer; font-family: inherit;
+    transition: color 0.2s; letter-spacing: 0.05em;
+  }
+  .logout-btn:hover { color: var(--red); }
+
+  /* ─── MAIN ─── */
+  .main {
+    margin-left: var(--sidebar-w);
+    flex: 1; padding: 2rem 2.5rem;
+    max-width: calc(100vw - var(--sidebar-w));
+  }
+  .page-admin { display: none; }
+  .page-admin.active { display: block; }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 1.8rem; flex-wrap: wrap; gap: 1rem;
+  }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; font-weight: 300; color: var(--warm-white);
+  }
+  .page-header .sub {
+    font-size: 0.72rem; color: var(--ash); margin-top: 0.2rem;
+  }
+
+  /* ─── STATS ROW ─── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  @media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 5px; padding: 1.2rem 1.4rem;
+  }
+  .stat-label {
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim); margin-bottom: 0.5rem;
+  }
+  .stat-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem; font-weight: 300; color: var(--warm-white); line-height: 1;
+  }
+  .stat-val.gold { color: var(--gold); }
+  .stat-val.green { color: var(--green); }
+  .stat-val.red { color: var(--red); }
+  .stat-change {
+    font-size: 0.65rem; color: var(--text-dim); margin-top: 0.3rem;
+  }
+
+  /* ─── FILTER ROW ─── */
+  .filter-row {
+    display: flex; gap: 0.6rem; margin-bottom: 1.2rem; flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-row input {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--paper); font-family: inherit; font-size: 0.78rem;
+    padding: 0.5rem 0.85rem; border-radius: 3px; outline: none;
+    transition: border-color 0.2s; width: 220px;
+  }
+  .filter-row input:focus { border-color: var(--gold); }
+  .filter-row select {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--ash); font-family: inherit; font-size: 0.75rem;
+    padding: 0.5rem 0.75rem; border-radius: 3px; outline: none; cursor: pointer;
+  }
+  .filter-row select option { background: #1a1714; }
+  .count-label { margin-left: auto; font-size: 0.7rem; color: var(--text-dim); }
+
+  /* ─── SUBMISSION TABLE ─── */
+  .sub-table { width: 100%; border-collapse: collapse; }
+  .sub-table th {
+    font-size: 0.6rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--text-dim); padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left; white-space: nowrap;
+  }
+  .sub-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.8rem; vertical-align: middle;
+  }
+  .sub-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .thumb {
+    width: 52px; height: 42px; border-radius: 3px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem; color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .sub-title { font-weight: 400; color: var(--warm-white); margin-bottom: 0.2rem; }
+  .sub-meta { font-size: 0.68rem; color: var(--text-dim); }
+  .tag-chip {
+    display: inline-block;
+    font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.18rem 0.45rem;
+    background: rgba(184,150,62,0.08);
+    border: 1px solid rgba(184,150,62,0.2);
+    border-radius: 2px; color: var(--gold-light);
+    margin: 0.15rem 0.15rem 0 0;
+  }
+  .status-pill {
+    font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.25rem 0.65rem; border-radius: 100px;
+    font-weight: 500; white-space: nowrap;
+  }
+  .status-pill.pending  { background: rgba(212,148,58,0.15); color: var(--amber); border: 1px solid rgba(212,148,58,0.3); }
+  .status-pill.approved { background: rgba(76,175,125,0.15); color: var(--green); border: 1px solid rgba(76,175,125,0.3); }
+  .status-pill.rejected { background: rgba(224,85,85,0.15);  color: var(--red);   border: 1px solid rgba(224,85,85,0.3); }
+  .status-pill.archived { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); }
+  .order-status-pill.archived { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); }
+
+  /* Archived row / card dimming */
+  tr.is-archived td { opacity: 0.45; }
+  tr.is-archived:hover td { opacity: 0.65; }
+  .pub-card.is-archived { opacity: 0.4; filter: grayscale(0.4); }
+  .pub-card.is-archived:hover { opacity: 0.65; }
+
+  /* Archive toggle button */
+  .act-archive        { color: var(--text-dim); border-color: rgba(255,255,255,0.12); background: transparent; }
+  .act-archive:hover  { color: var(--paper); border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
+  .act-unarchive      { color: var(--gold);  border-color: rgba(184,150,62,0.3);  background: rgba(184,150,62,0.07); }
+  .act-unarchive:hover{ color: var(--gold-light); border-color: var(--gold); background: rgba(184,150,62,0.15); }
+
+  .action-btns { display: flex; gap: 0.4rem; }
+  .act-btn {
+    padding: 0.3rem 0.7rem; border-radius: 3px;
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer; font-family: inherit; border: 1px solid;
+    transition: all 0.18s; white-space: nowrap;
+  }
+  .act-approve { color: var(--green); border-color: rgba(76,175,125,0.35); background: rgba(76,175,125,0.08); }
+  .act-approve:hover { background: rgba(76,175,125,0.2); }
+  .act-reject  { color: var(--red);   border-color: rgba(224,85,85,0.35);  background: rgba(224,85,85,0.08); }
+  .act-reject:hover  { background: rgba(224,85,85,0.2); }
+  .act-view    { color: var(--ash);   border-color: var(--border);         background: transparent; }
+  .act-view:hover    { color: var(--paper); border-color: var(--ash); }
+  .act-delete  { color: var(--red);   border-color: rgba(224,85,85,0.25);  background: transparent; }
+  .act-delete:hover  { background: rgba(224,85,85,0.12); }
+  .act-edit    { color: var(--gold);  border-color: var(--border);         background: transparent; }
+  .act-edit:hover    { border-color: var(--gold); background: rgba(184,150,62,0.08); }
+
+  /* ─── CUSTOM ORDERS TABLE ─── */
+  .order-status-pill {
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.25rem 0.65rem; border-radius: 100px; font-weight: 500;
+  }
+  .order-status-pill.new      { background: rgba(184,150,62,0.15); color: var(--gold);  border: 1px solid rgba(184,150,62,0.35); }
+  .order-status-pill.progress { background: rgba(76,175,125,0.12); color: var(--green); border: 1px solid rgba(76,175,125,0.3); }
+  .order-status-pill.delivered{ background: rgba(255,255,255,0.06);color: var(--ash);   border: 1px solid var(--border); }
+  .order-status-pill.refunded { background: rgba(224,85,85,0.12);  color: var(--red);   border: 1px solid rgba(224,85,85,0.3); }
+  .price-tag { color: var(--gold); font-weight: 500; }
+
+  /* ─── PUBLISHED GRID ─── */
+  .pub-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  .pub-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 4px; overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .pub-card:hover { transform: translateY(-2px); }
+  .pub-thumb {
+    height: 130px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem; color: var(--text-dim);
+  }
+  .pub-info { padding: 0.7rem 0.8rem; }
+  .pub-title { font-size: 0.78rem; color: var(--warm-white); margin-bottom: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pub-tags { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-bottom: 0.5rem; }
+  .pub-actions { display: flex; gap: 0.3rem; }
+
+  /* ─── MODAL ─── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0; z-index: 800;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center; padding: 2rem;
+  }
+  .modal-bg.open { display: flex; }
+  .modal-box {
+    background: var(--card2); border: 1px solid var(--border-strong);
+    border-radius: 6px; max-width: 540px; width: 100%;
+    padding: 2rem; position: relative;
+    animation: slideUp 0.25s ease;
+  }
+  .modal-box h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; font-weight: 300; margin-bottom: 1rem;
+  }
+  .modal-close-btn {
+    position: absolute; top: 1rem; right: 1rem;
+    background: none; border: 1px solid var(--border);
+    color: var(--ash); width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; font-size: 0.85rem; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .modal-close-btn:hover { color: var(--paper); border-color: var(--gold); }
+  .edit-field { margin-bottom: 1rem; }
+  .edit-field label {
+    display: block; font-size: 0.6rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ash); margin-bottom: 0.4rem;
+  }
+  .edit-field input, .edit-field select, .edit-field textarea {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); color: var(--paper);
+    font-family: inherit; font-size: 0.82rem;
+    padding: 0.6rem 0.85rem; border-radius: 3px; outline: none;
+    transition: border-color 0.2s; resize: vertical;
+  }
+  .edit-field input:focus, .edit-field textarea:focus { border-color: var(--gold); }
+  .edit-field select option { background: #1a1714; }
+  .modal-actions { display: flex; gap: 0.6rem; margin-top: 1.4rem; justify-content: flex-end; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9000;
+    background: var(--card2); border: 1px solid var(--border-strong);
+    padding: 0.75rem 1.3rem; border-radius: 4px;
+    font-size: 0.78rem; color: var(--gold-light);
+    transform: translateY(60px); opacity: 0;
+    transition: all 0.28s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  @keyframes slideUp {
+    from { opacity:0; transform: translateY(14px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN ─── -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">male<span>FOOT</span>fantasy</div>
+    <div class="login-sub">Admin Panel</div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="admin" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="loginErr">Incorrect credentials. Try again.</div>
+  </div>
+</div>
+
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    male<span>FOOT</span>fantasy
+    <div class="sidebar-badge">Admin Panel</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="showAdmin('dashboard')" data-page="dashboard">
+      <span class="icon">◈</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showAdmin('submissions')" data-page="submissions">
+      <span class="icon">⬆</span> Submissions
+      <span class="nav-badge" id="pendingBadge">3</span>
+    </div>
+    <div class="nav-item" onclick="showAdmin('orders')" data-page="orders">
+      <span class="icon">✦</span> Custom Orders
+      <span class="nav-badge amber" id="orderBadge">2</span>
+    </div>
+    <div class="nav-item" onclick="showAdmin('published')" data-page="published">
+      <span class="icon">▦</span> Published
+    </div>
+    <div class="nav-item" onclick="showAdmin('tags')" data-page="tags">
+      <span class="icon">⊛</span> Tags
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <span id="adminUser">admin</span>
+    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+  </div>
+</aside>
+
+<!-- ─── MAIN CONTENT ─── -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div id="admin-dashboard" class="page-admin active">
+    <div class="page-header">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="sub">Overview of site activity</div>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Published Posts</div>
+        <div class="stat-val" id="statPublished">12</div>
+        <div class="stat-change">↑ 2 this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Review</div>
+        <div class="stat-val red" id="statPending">3</div>
+        <div class="stat-change">Needs attention</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Custom Orders</div>
+        <div class="stat-val amber" id="statOrders">2</div>
+        <div class="stat-change">2 awaiting action</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Revenue (month)</div>
+        <div class="stat-val green">$148</div>
+        <div class="stat-change">↑ 4 orders this month</div>
+      </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:5px;padding:1.4rem">
+      <div style="font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem">Recent Activity</div>
+      <div id="activityFeed"></div>
+    </div>
+  </div>
+
+  <!-- SUBMISSIONS -->
+  <div id="admin-submissions" class="page-admin">
+    <div class="page-header">
+      <div>
+        <h1>Submissions</h1>
+        <div class="sub">Review and moderate user-submitted content</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <input type="text" placeholder="Search title, email…" oninput="filterSubs(this.value)">
+      <select onchange="filterSubStatus(this.value)">
+        <option value="all">All statuses</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+        <option value="archived">Archived</option>
+      </select>
+      <select onchange="filterSubType(this.value)">
+        <option value="all">All types</option>
+        <option value="AI-Gen">AI-Gen</option>
+        <option value="Real">Real</option>
+        <option value="Video">Video</option>
+      </select>
+      <span class="count-label" id="subCount"></span>
+    </div>
+    <table class="sub-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Title / Submitter</th>
+          <th>Tags</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="subTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- CUSTOM ORDERS -->
+  <div id="admin-orders" class="page-admin">
+    <div class="page-header">
+      <div>
+        <h1>Custom Orders</h1>
+        <div class="sub">Manage paid generation requests</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <input type="text" placeholder="Search email, request…" oninput="filterOrders(this.value)">
+      <select onchange="filterOrderStatus(this.value)">
+        <option value="all">All statuses</option>
+        <option value="new">New</option>
+        <option value="progress">In Progress</option>
+        <option value="delivered">Delivered</option>
+        <option value="refunded">Refunded</option>
+        <option value="archived">Archived</option>
+      </select>
+      <span class="count-label" id="orderCount"></span>
+    </div>
+    <table class="sub-table">
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Email</th>
+          <th>Package</th>
+          <th>Request summary</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="orderTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- PUBLISHED -->
+  <div id="admin-published" class="page-admin">
+    <div class="page-header">
+      <div>
+        <h1>Published</h1>
+        <div class="sub">Manage all live posts</div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <input type="text" placeholder="Search posts…" oninput="filterPub(this.value)">
+      <select onchange="filterPubTag(this.value)" id="pubTagFilter">
+        <option value="all">All tags</option>
+      </select>
+      <span class="count-label" id="pubCount"></span>
+    </div>
+    <div class="pub-grid" id="pubGrid"></div>
+  </div>
+
+  <!-- TAGS -->
+  <div id="admin-tags" class="page-admin">
+    <div class="page-header">
+      <div>
+        <h1>Tags</h1>
+        <div class="sub">Manage and create tags</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;align-items:flex-end">
+      <div>
+        <label style="display:block;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--ash);margin-bottom:0.4rem">New Tag Name</label>
+        <input type="text" id="newTagInput" placeholder="e.g. closeup"
+          style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--paper);font-family:inherit;font-size:0.82rem;padding:0.6rem 0.85rem;border-radius:3px;outline:none;width:200px">
+      </div>
+      <button class="act-btn act-edit" onclick="addTag()" style="padding:0.6rem 1.2rem">+ Add Tag</button>
+    </div>
+    <div id="tagsList" style="display:flex;flex-wrap:wrap;gap:0.6rem"></div>
+  </div>
+
+</main>
+
+<!-- ─── EDIT MODAL ─── -->
+<div class="modal-bg" id="editModal" onclick="closeEditModal(event)">
+  <div class="modal-box">
+    <button class="modal-close-btn" onclick="document.getElementById('editModal').classList.remove('open')">✕</button>
+    <h3 id="editModalTitle">Edit Post</h3>
+    <div class="edit-field">
+      <label>Title</label>
+      <input type="text" id="editTitle">
+    </div>
+    <div class="edit-field">
+      <label>Tags (comma separated)</label>
+      <input type="text" id="editTags">
+    </div>
+    <div class="edit-field">
+      <label>Type</label>
+      <select id="editType">
+        <option>AI-Gen</option><option>Real</option><option>Video</option><option>AI-Video</option>
+      </select>
+    </div>
+    <div class="edit-field">
+      <label>Notes</label>
+      <textarea id="editNotes" rows="3"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="act-btn act-view" onclick="document.getElementById('editModal').classList.remove('open')">Cancel</button>
+      <button class="act-btn act-edit" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ORDER DETAIL MODAL ─── -->
+<div class="modal-bg" id="orderModal" onclick="closeOrderModal(event)">
+  <div class="modal-box" style="max-width:580px">
+    <button class="modal-close-btn" onclick="document.getElementById('orderModal').classList.remove('open')">✕</button>
+    <h3>Order Detail</h3>
+    <div id="orderDetail" style="font-size:0.82rem;color:var(--ash);line-height:1.8"></div>
+    <div class="modal-actions">
+      <button class="act-btn act-reject"   onclick="updateOrderStatus('refunded')">Mark Refunded</button>
+      <button class="act-btn act-approve"  onclick="updateOrderStatus('progress')">Mark In Progress</button>
+      <button class="act-btn act-edit"     onclick="updateOrderStatus('delivered')">Mark Delivered</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST ─── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// SUPABASE CONFIG — fill in your values
+// ══════════════════════════════════════════════
+const SUPABASE_URL  = 'https://vgmpkiyxblstqeyucfoq.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbXBraXl4YmxzdHFleXVjZm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Njg4MzAsImV4cCI6MjA5MjE0NDgzMH0.bUCc5Q8Tb5YupPEldlSW8iiuvoPD0elCvUsFiLxwfu0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── STATE ───
+const PALETTES = ['#1e1a16,#2a2016','#16191e,#0f1a22','#1a1620,#22162a','#1e1916,#281e10'];
+let SUBMISSIONS = [], ORDERS = [], PUBLISHED = [];
+let ALL_TAGS    = ['candid','studio','outdoor','editorial','bw','ai','video','artistic','closeup','solo'];
+let activeOrderId = null;
+let activeEditId  = null;
+let subFilter = { q:'', status:'all', type:'all' };
+let ordFilter = { q:'', status:'all' };
+let pubFilter = { q:'', tag:'all' };
+
+// ─── DATA LOADERS ───
+async function loadAll() {
+  const [subs, orders, posts] = await Promise.all([
+    sb.from('submissions').select('*').order('created_at', { ascending: false }),
+    sb.from('orders').select('*').order('created_at', { ascending: false }),
+    sb.from('posts').select('*').order('created_at', { ascending: false }),
+  ]);
+  SUBMISSIONS = (subs.data   || []).map(s => ({ ...s, date: s.created_at?.slice(0,10) }));
+  ORDERS      = (orders.data || []).map(o => ({ ...o, date: o.created_at?.slice(0,10), pkg: o.package }));
+  PUBLISHED   = posts.data   || [];
+  renderDashboard(); renderSubs(); renderOrders(); renderPublished(); renderTags();
+}
+
+// ──────────────────────────────────────────────
+// LOGIN — uses Supabase Auth
+// ──────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const { error } = await sb.auth.signInWithPassword({ email: u, password: p });
+  if (error) {
+    document.getElementById('loginErr').style.display = 'block';
+  } else {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminUser').textContent = u;
+    await loadAll();
+  }
+}
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ──────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────
+function showAdmin(page) {
+  document.querySelectorAll('.page-admin').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`admin-${page}`).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+}
+
+// ──────────────────────────────────────────────
+// DASHBOARD
+// ──────────────────────────────────────────────
+function renderDashboard() {
+  const pending   = SUBMISSIONS.filter(s=>s.status==='pending' && !s.archived).length;
+  const newOrders = ORDERS.filter(o=>o.status==='new' && !o.archived).length;
+  document.getElementById('statPending').textContent   = pending;
+  document.getElementById('statOrders').textContent    = newOrders;
+  document.getElementById('statPublished').textContent = PUBLISHED.filter(p=>!p.archived).length;
+  document.getElementById('pendingBadge').textContent  = pending;
+  document.getElementById('orderBadge').textContent    = newOrders;
+  const feed = [
+    ...SUBMISSIONS.slice(0,3).map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem"><span>📬 Submission — <strong>${s.title}</strong></span><span style="font-size:0.65rem;color:var(--text-dim)">${s.date}</span></div>`),
+    ...ORDERS.slice(0,2).map(o=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem"><span>💳 Order ${o.id} — <span style="color:var(--gold)">$${o.price}</span></span><span style="font-size:0.65rem;color:var(--text-dim)">${o.date}</span></div>`),
+  ];
+  document.getElementById('activityFeed').innerHTML = feed.join('');
+}
+
+// ──────────────────────────────────────────────
+// SUBMISSIONS
+// ──────────────────────────────────────────────
+function renderSubs() {
+  const data = SUBMISSIONS.filter(s=>{
+    const q = subFilter.q.toLowerCase();
+    const matchQ = !q || s.title.toLowerCase().includes(q) || s.email.includes(q);
+    const matchS = subFilter.status==='all'
+      ? true
+      : subFilter.status==='archived'
+        ? s.archived
+        : !s.archived && s.status===subFilter.status;
+    const matchT = subFilter.type==='all' || s.type===subFilter.type;
+    return matchQ && matchS && matchT;
+  });
+  document.getElementById('subCount').textContent = `${data.length} result${data.length!==1?'s':''}`;
+  const pal = i => PALETTES[i%PALETTES.length].split(',');
+  document.getElementById('subTableBody').innerHTML = data.map(s=>`
+  <tr class="${s.archived?'is-archived':''}">
+    <td><div class="thumb" style="background:linear-gradient(135deg,${pal(s.id)[0]},${pal(s.id)[1]})">${s.title.charAt(0)}</div></td>
+    <td>
+      <div class="sub-title">${s.title}</div>
+      <div class="sub-meta">${s.email}</div>
+      ${s.notes?`<div class="sub-meta" style="font-style:italic">"${s.notes}"</div>`:''}
+    </td>
+    <td>${(s.tags||[]).map(t=>`<span class="tag-chip">${t}</span>`).join('')}</td>
+    <td style="font-size:0.75rem;color:var(--ash)">${s.type}</td>
+    <td style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap">${s.date}</td>
+    <td>${s.archived
+      ? '<span class="status-pill archived">Archived</span>'
+      : `<span class="status-pill ${s.status}">${s.status}</span>`}
+    </td>
+    <td>
+      <div class="action-btns">
+        ${!s.archived ? `
+          ${s.status==='pending'
+            ? `<button class="act-btn act-approve" onclick="setSubStatus(${s.id},'approved')">Approve</button>
+               <button class="act-btn act-reject"  onclick="setSubStatus(${s.id},'rejected')">Reject</button>`
+            : `<button class="act-btn act-view" onclick="setSubStatus(${s.id},'pending')">Reset</button>`}
+          <button class="act-btn act-edit"    onclick="openEdit('sub',${s.id})">Edit</button>
+          <button class="act-btn act-archive" onclick="toggleArchiveSub(${s.id})">Archive</button>
+        ` : `
+          <button class="act-btn act-unarchive" onclick="toggleArchiveSub(${s.id})">Unarchive</button>
+        `}
+        <button class="act-btn act-delete" onclick="deleteSub(${s.id})">Delete</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+async function setSubStatus(id, status) {
+  await sb.from('submissions').update({ status }).eq('id', id);
+  const s = SUBMISSIONS.find(x=>x.id===id);
+  if (s) { s.status = status; renderSubs(); renderDashboard(); showToast(`✦ "${s.title}" marked as ${status}`); }
+}
+async function toggleArchiveSub(id) {
+  const s = SUBMISSIONS.find(x=>x.id===id);
+  if (!s) return;
+  s.archived = !s.archived;
+  await sb.from('submissions').update({ archived: s.archived }).eq('id', id);
+  renderSubs(); renderDashboard();
+  showToast(s.archived ? `📦 "${s.title}" archived` : `✦ "${s.title}" unarchived`);
+}
+async function deleteSub(id) {
+  if (!confirm('Delete this submission permanently?')) return;
+  await sb.from('submissions').delete().eq('id', id);
+  const i = SUBMISSIONS.findIndex(x=>x.id===id);
+  if (i>-1) { const t=SUBMISSIONS[i].title; SUBMISSIONS.splice(i,1); renderSubs(); renderDashboard(); showToast(`Deleted "${t}"`); }
+}
+function filterSubs(q)      { subFilter.q=q; renderSubs(); }
+function filterSubStatus(v) { subFilter.status=v; renderSubs(); }
+function filterSubType(v)   { subFilter.type=v; renderSubs(); }
+
+// ──────────────────────────────────────────────
+// ORDERS
+// ──────────────────────────────────────────────
+function renderOrders() {
+  const data = ORDERS.filter(o=>{
+    const q = ordFilter.q.toLowerCase();
+    const matchQ = !q || o.email.includes(q) || o.request.toLowerCase().includes(q) || o.id.includes(q);
+    const matchS = ordFilter.status==='all'
+      ? true
+      : ordFilter.status==='archived'
+        ? o.archived
+        : !o.archived && o.status===ordFilter.status;
+    return matchQ && matchS;
+  });
+  document.getElementById('orderCount').textContent = `${data.length} order${data.length!==1?'s':''}`;
+  document.getElementById('orderTableBody').innerHTML = data.map(o=>`
+  <tr class="${o.archived?'is-archived':''}">
+    <td style="font-size:0.72rem;color:var(--ash);white-space:nowrap">${o.id}</td>
+    <td style="font-size:0.78rem">${o.email}</td>
+    <td style="font-size:0.75rem;white-space:nowrap">${o.pkg} &nbsp;<span class="price-tag">$${o.price}</span></td>
+    <td style="font-size:0.75rem;color:var(--ash);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.request}</td>
+    <td style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap">${o.date}</td>
+    <td>${o.archived
+      ? '<span class="order-status-pill archived">Archived</span>'
+      : `<span class="order-status-pill ${o.status}">${o.status}</span>`}
+    </td>
+    <td>
+      <div class="action-btns">
+        <button class="act-btn act-view" onclick="openOrderDetail('${o.id}')">View</button>
+        ${o.archived
+          ? `<button class="act-btn act-unarchive" onclick="toggleArchiveOrder('${o.id}')">Unarchive</button>`
+          : `<button class="act-btn act-archive"   onclick="toggleArchiveOrder('${o.id}')">Archive</button>`}
+        <button class="act-btn act-delete" onclick="deleteOrder('${o.id}')">Delete</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function openOrderDetail(id) {
+  const o = ORDERS.find(x=>x.id===id);
+  if (!o) return;
+  activeOrderId = id;
+  document.getElementById('orderDetail').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 2rem;margin-bottom:1rem">
+      <div><span style="color:var(--text-dim)">Order ID:</span> ${o.id}</div>
+      <div><span style="color:var(--text-dim)">Date:</span> ${o.date}</div>
+      <div><span style="color:var(--text-dim)">Email:</span> ${o.email}</div>
+      <div><span style="color:var(--text-dim)">Package:</span> ${o.pkg}</div>
+      <div><span style="color:var(--text-dim)">Amount:</span> <span style="color:var(--gold)">$${o.price}</span></div>
+      <div><span style="color:var(--text-dim)">Status:</span> <span class="order-status-pill ${o.status}" style="margin-left:0.3rem">${o.status}</span></div>
+    </div>
+    <div style="margin-bottom:0.6rem"><span style="color:var(--text-dim)">Request:</span></div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:3px;padding:0.8rem;font-size:0.8rem;line-height:1.6">${o.request}</div>
+    ${o.notes?`<div style="margin-top:0.7rem;font-size:0.72rem;color:var(--text-dim)">Notes: ${o.notes}</div>`:''}
+  `;
+  document.getElementById('orderModal').classList.add('open');
+}
+async function updateOrderStatus(status) {
+  await sb.from('orders').update({ status }).eq('id', activeOrderId);
+  const o = ORDERS.find(x=>x.id===activeOrderId);
+  if (o) { o.status=status; renderOrders(); renderDashboard(); document.getElementById('orderModal').classList.remove('open'); showToast(`Order ${activeOrderId} → ${status}`); }
+}
+async function toggleArchiveOrder(id) {
+  const o = ORDERS.find(x=>x.id===id);
+  if (!o) return;
+  o.archived = !o.archived;
+  await sb.from('orders').update({ archived: o.archived }).eq('id', id);
+  renderOrders(); renderDashboard();
+  showToast(o.archived ? `📦 Order ${id} archived` : `✦ Order ${id} unarchived`);
+}
+async function deleteOrder(id) {
+  if (!confirm('Delete this order?')) return;
+  await sb.from('orders').delete().eq('id', id);
+  const i = ORDERS.findIndex(x=>x.id===id);
+  if (i>-1) { ORDERS.splice(i,1); renderOrders(); renderDashboard(); showToast(`Deleted ${id}`); }
+}
+function filterOrders(q)      { ordFilter.q=q; renderOrders(); }
+function filterOrderStatus(v) { ordFilter.status=v; renderOrders(); }
+function closeOrderModal(e)   { if(e.target===document.getElementById('orderModal')) document.getElementById('orderModal').classList.remove('open'); }
+
+// ──────────────────────────────────────────────
+// PUBLISHED
+// ──────────────────────────────────────────────
+function renderPublished() {
+  const allTags = [...new Set(PUBLISHED.flatMap(p=>p.tags||[]))].sort();
+  const sel = document.getElementById('pubTagFilter');
+  sel.innerHTML = '<option value="all">All (active)</option>'
+    + allTags.map(t=>`<option value="${t}">${t}</option>`).join('')
+    + '<option value="__archived__">📦 Archived</option>';
+
+  const showArchived = pubFilter.tag === '__archived__';
+  const data = PUBLISHED.filter(p=>{
+    const q = pubFilter.q.toLowerCase();
+    const matchQ = !q || p.title.toLowerCase().includes(q);
+    const matchT = showArchived
+      ? p.archived
+      : pubFilter.tag==='all'
+        ? !p.archived
+        : !p.archived && (p.tags||[]).includes(pubFilter.tag);
+    return matchQ && matchT;
+  });
+  document.getElementById('pubCount').textContent = `${data.length} post${data.length!==1?'s':''}`;
+  const pal = i => PALETTES[i%PALETTES.length].split(',');
+  document.getElementById('pubGrid').innerHTML = data.map(p=>`
+  <div class="pub-card ${p.archived?'is-archived':''}">
+    <div class="pub-thumb" style="background:linear-gradient(135deg,${pal(p.id)[0]},${pal(p.id)[1]})">${p.title.charAt(0)}</div>
+    <div class="pub-info">
+      <div class="pub-title" title="${p.title}">${p.title}</div>
+      <div class="pub-tags">${(p.tags||[]).map(t=>`<span class="tag-chip">${t}</span>`).join('')}</div>
+      <div style="font-size:0.65rem;margin-bottom:0.5rem">
+        ${p.archived
+          ? '<span style="color:var(--text-dim)">📦 Archived</span>'
+          : `<span style="color:var(--text-dim)">♥ ${p.likes} · ${p.type}</span>`}
+      </div>
+      <div class="pub-actions">
+        ${!p.archived ? `<button class="act-btn act-edit" onclick="openEdit('pub',${p.id})">Edit</button>` : ''}
+        ${p.archived
+          ? `<button class="act-btn act-unarchive" onclick="toggleArchivePub(${p.id})">Unarchive</button>`
+          : `<button class="act-btn act-archive"   onclick="toggleArchivePub(${p.id})">Archive</button>`}
+        <button class="act-btn act-delete" onclick="deletePub(${p.id})">Delete</button>
+      </div>
+    </div>
+  </div>`).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;padding:2rem 0">No posts found.</div>';
+}
+async function toggleArchivePub(id) {
+  const p = PUBLISHED.find(x=>x.id===id);
+  if (!p) return;
+  p.archived = !p.archived;
+  await sb.from('posts').update({ archived: p.archived }).eq('id', id);
+  renderPublished(); renderDashboard();
+  showToast(p.archived ? `📦 "${p.title}" archived` : `✦ "${p.title}" unarchived`);
+}
+async function deletePub(id) {
+  if (!confirm('Remove this post from the gallery?')) return;
+  await sb.from('posts').delete().eq('id', id);
+  const i = PUBLISHED.findIndex(x=>x.id===id);
+  if (i>-1) { const t=PUBLISHED[i].title; PUBLISHED.splice(i,1); renderPublished(); renderDashboard(); showToast(`Removed "${t}"`); }
+}
+function filterPub(q)    { pubFilter.q=q; renderPublished(); }
+function filterPubTag(v) { pubFilter.tag=v; renderPublished(); }
+
+// ──────────────────────────────────────────────
+// TAGS
+// ──────────────────────────────────────────────
+function renderTags() {
+  document.getElementById('tagsList').innerHTML = ALL_TAGS.map(t=>`
+  <div style="display:flex;align-items:center;gap:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.8rem">
+    <span class="tag-chip" style="margin:0">${t}</span>
+    <button onclick="deleteTag('${t}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.75rem;transition:color 0.2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</button>
+  </div>`).join('');
+}
+function addTag() {
+  const val = document.getElementById('newTagInput').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!val) return;
+  if (ALL_TAGS.includes(val)) { showToast('Tag already exists'); return; }
+  ALL_TAGS.push(val); ALL_TAGS.sort();
+  document.getElementById('newTagInput').value = '';
+  renderTags(); showToast(`✦ Tag "${val}" added`);
+}
+function deleteTag(t) {
+  if (!confirm(`Delete tag "${t}"?`)) return;
+  ALL_TAGS = ALL_TAGS.filter(x=>x!==t);
+  renderTags(); showToast(`Tag "${t}" deleted`);
+}
+
+// ──────────────────────────────────────────────
+// EDIT MODAL
+// ──────────────────────────────────────────────
+function openEdit(source, id) {
+  activeEditId = { source, id };
+  const list = source==='sub' ? SUBMISSIONS : PUBLISHED;
+  const item = list.find(x=>x.id===id);
+  if (!item) return;
+  document.getElementById('editModalTitle').textContent = source==='sub' ? 'Edit Submission' : 'Edit Post';
+  document.getElementById('editTitle').value = item.title;
+  document.getElementById('editTags').value  = (item.tags||[]).join(', ');
+  document.getElementById('editType').value  = item.type;
+  document.getElementById('editNotes').value = item.notes || '';
+  document.getElementById('editModal').classList.add('open');
+}
+async function saveEdit() {
+  const { source, id } = activeEditId;
+  const list  = source==='sub' ? SUBMISSIONS : PUBLISHED;
+  const table = source==='sub' ? 'submissions' : 'posts';
+  const item  = list.find(x=>x.id===id);
+  if (!item) return;
+  item.title = document.getElementById('editTitle').value.trim();
+  item.tags  = document.getElementById('editTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  item.type  = document.getElementById('editType').value;
+  item.notes = document.getElementById('editNotes').value.trim();
+  await sb.from(table).update({ title: item.title, tags: item.tags, type: item.type, notes: item.notes }).eq('id', id);
+  document.getElementById('editModal').classList.remove('open');
+  if (source==='sub') renderSubs(); else renderPublished();
+  showToast(`✦ "${item.title}" updated`);
+}
+function closeEditModal(e) { if(e.target===document.getElementById('editModal')) document.getElementById('editModal').classList.remove('open'); }
+
+// ──────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ──────────────────────────────────────────────
+// INIT — check existing Supabase session
+// ──────────────────────────────────────────────
+(async function() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminUser').textContent = session.user.email;
+    await loadAll();
+  }
+})();
+
+// ──────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────
+function showAdmin(page) {
+  document.querySelectorAll('.page-admin').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`admin-${page}`).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+}
+
+// ──────────────────────────────────────────────
+// DASHBOARD
+// ──────────────────────────────────────────────
+function renderDashboard() {
+  const pending = SUBMISSIONS.filter(s=>s.status==='pending').length;
+  const newOrders = ORDERS.filter(o=>o.status==='new').length;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statOrders').textContent  = newOrders;
+  document.getElementById('statPublished').textContent = PUBLISHED.length;
+  document.getElementById('pendingBadge').textContent = pending;
+  document.getElementById('orderBadge').textContent   = newOrders;
+
+  const feed = [
+    ...SUBMISSIONS.slice(0,3).map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem"><span>📬 Submission — <strong>${s.title}</strong></span><span style="font-size:0.65rem;color:var(--text-dim)">${s.date}</span></div>`),
+    ...ORDERS.slice(0,2).map(o=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem"><span>💳 Order ${o.id} — <span style="color:var(--gold)">$${o.price}</span></span><span style="font-size:0.65rem;color:var(--text-dim)">${o.date}</span></div>`),
+  ];
+  document.getElementById('activityFeed').innerHTML = feed.join('');
+}
+
+// ──────────────────────────────────────────────
+// SUBMISSIONS
+// ──────────────────────────────────────────────
+function renderSubs() {
+  const data = SUBMISSIONS.filter(s=>{
+    const q = subFilter.q.toLowerCase();
+    const matchQ = !q || s.title.toLowerCase().includes(q) || s.email.includes(q);
+    const matchS = subFilter.status==='all'
+      ? true
+      : subFilter.status==='archived'
+        ? s.archived
+        : !s.archived && s.status===subFilter.status;
+    const matchT = subFilter.type==='all' || s.type===subFilter.type;
+    return matchQ && matchS && matchT;
+  });
+  document.getElementById('subCount').textContent = `${data.length} result${data.length!==1?'s':''}`;
+  const pal = i => PALETTES[i%PALETTES.length].split(',');
+  document.getElementById('subTableBody').innerHTML = data.map(s=>`
+  <tr class="${s.archived?'is-archived':''}">
+    <td><div class="thumb" style="background:linear-gradient(135deg,${pal(s.id)[0]},${pal(s.id)[1]})">${s.title.charAt(0)}</div></td>
+    <td>
+      <div class="sub-title">${s.title}</div>
+      <div class="sub-meta">${s.email}</div>
+      ${s.notes?`<div class="sub-meta" style="font-style:italic">"${s.notes}"</div>`:''}
+    </td>
+    <td>${s.tags.map(t=>`<span class="tag-chip">${t}</span>`).join('')}</td>
+    <td style="font-size:0.75rem;color:var(--ash)">${s.type}</td>
+    <td style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap">${s.date}</td>
+    <td>
+      ${s.archived
+        ? '<span class="status-pill archived">Archived</span>'
+        : `<span class="status-pill ${s.status}">${s.status}</span>`}
+    </td>
+    <td>
+      <div class="action-btns">
+        ${!s.archived ? `
+          ${s.status==='pending'
+            ? `<button class="act-btn act-approve" onclick="setSubStatus(${s.id},'approved')">Approve</button>
+               <button class="act-btn act-reject"  onclick="setSubStatus(${s.id},'rejected')">Reject</button>`
+            : `<button class="act-btn act-view" onclick="setSubStatus(${s.id},'pending')">Reset</button>`}
+          <button class="act-btn act-edit"    onclick="openEdit('sub',${s.id})">Edit</button>
+          <button class="act-btn act-archive" onclick="toggleArchiveSub(${s.id})">Archive</button>
+        ` : `
+          <button class="act-btn act-unarchive" onclick="toggleArchiveSub(${s.id})">Unarchive</button>
+        `}
+        <button class="act-btn act-delete" onclick="deleteSub(${s.id})">Delete</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function setSubStatus(id, status) {
+  const s = SUBMISSIONS.find(x=>x.id===id);
+  if (s) { s.status = status; renderSubs(); renderDashboard(); showToast(`✦ "${s.title}" marked as ${status}`); }
+}
+function toggleArchiveSub(id) {
+  const s = SUBMISSIONS.find(x=>x.id===id);
+  if (!s) return;
+  s.archived = !s.archived;
+  renderSubs(); renderDashboard();
+  showToast(s.archived ? `📦 "${s.title}" archived` : `✦ "${s.title}" unarchived`);
+}
+function deleteSub(id) {
+  if (!confirm('Delete this submission permanently?')) return;
+  const i = SUBMISSIONS.findIndex(x=>x.id===id);
+  if (i>-1) { const t = SUBMISSIONS[i].title; SUBMISSIONS.splice(i,1); renderSubs(); renderDashboard(); showToast(`Deleted "${t}"`); }
+}
+function filterSubs(q)      { subFilter.q=q; renderSubs(); }
+function filterSubStatus(v) { subFilter.status=v; renderSubs(); }
+function filterSubType(v)   { subFilter.type=v; renderSubs(); }
+
+// ──────────────────────────────────────────────
+// ORDERS
+// ──────────────────────────────────────────────
+function renderOrders() {
+  const data = ORDERS.filter(o=>{
+    const q = ordFilter.q.toLowerCase();
+    const matchQ = !q || o.email.includes(q) || o.request.toLowerCase().includes(q) || o.id.includes(q);
+    const matchS = ordFilter.status==='all'
+      ? true
+      : ordFilter.status==='archived'
+        ? o.archived
+        : !o.archived && o.status===ordFilter.status;
+    return matchQ && matchS;
+  });
+  document.getElementById('orderCount').textContent = `${data.length} order${data.length!==1?'s':''}`;
+  document.getElementById('orderTableBody').innerHTML = data.map(o=>`
+  <tr class="${o.archived?'is-archived':''}">
+    <td style="font-size:0.72rem;color:var(--ash);white-space:nowrap">${o.id}</td>
+    <td style="font-size:0.78rem">${o.email}</td>
+    <td style="font-size:0.75rem;white-space:nowrap">${o.pkg} &nbsp;<span class="price-tag">$${o.price}</span></td>
+    <td style="font-size:0.75rem;color:var(--ash);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.request}</td>
+    <td style="font-size:0.72rem;color:var(--text-dim);white-space:nowrap">${o.date}</td>
+    <td>${o.archived
+      ? '<span class="order-status-pill archived">Archived</span>'
+      : `<span class="order-status-pill ${o.status}">${o.status}</span>`}
+    </td>
+    <td>
+      <div class="action-btns">
+        <button class="act-btn act-view" onclick="openOrderDetail('${o.id}')">View</button>
+        ${o.archived
+          ? `<button class="act-btn act-unarchive" onclick="toggleArchiveOrder('${o.id}')">Unarchive</button>`
+          : `<button class="act-btn act-archive"   onclick="toggleArchiveOrder('${o.id}')">Archive</button>`}
+        <button class="act-btn act-delete" onclick="deleteOrder('${o.id}')">Delete</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+function toggleArchiveOrder(id) {
+  const o = ORDERS.find(x=>x.id===id);
+  if (!o) return;
+  o.archived = !o.archived;
+  renderOrders(); renderDashboard();
+  showToast(o.archived ? `📦 Order ${id} archived` : `✦ Order ${id} unarchived`);
+}
+function openOrderDetail(id) {
+  const o = ORDERS.find(x=>x.id===id);
+  if (!o) return;
+  activeOrderId = id;
+  document.getElementById('orderDetail').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 2rem;margin-bottom:1rem">
+      <div><span style="color:var(--text-dim)">Order ID:</span> ${o.id}</div>
+      <div><span style="color:var(--text-dim)">Date:</span> ${o.date}</div>
+      <div><span style="color:var(--text-dim)">Email:</span> ${o.email}</div>
+      <div><span style="color:var(--text-dim)">Package:</span> ${o.pkg}</div>
+      <div><span style="color:var(--text-dim)">Amount:</span> <span style="color:var(--gold)">$${o.price}</span></div>
+      <div><span style="color:var(--text-dim)">Status:</span> <span class="order-status-pill ${o.status}" style="margin-left:0.3rem">${o.status}</span></div>
+    </div>
+    <div style="margin-bottom:0.6rem"><span style="color:var(--text-dim)">Request:</span></div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:3px;padding:0.8rem;font-size:0.8rem;line-height:1.6">${o.request}</div>
+    ${o.notes?`<div style="margin-top:0.7rem;font-size:0.72rem;color:var(--text-dim)">Notes: ${o.notes}</div>`:''}
+  `;
+  document.getElementById('orderModal').classList.add('open');
+}
+function updateOrderStatus(status) {
+  const o = ORDERS.find(x=>x.id===activeOrderId);
+  if (o) { o.status=status; renderOrders(); renderDashboard(); document.getElementById('orderModal').classList.remove('open'); showToast(`Order ${activeOrderId} → ${status}`); }
+}
+function deleteOrder(id) {
+  if (!confirm('Delete this order?')) return;
+  const i = ORDERS.findIndex(x=>x.id===id);
+  if (i>-1) { ORDERS.splice(i,1); renderOrders(); renderDashboard(); showToast(`Deleted ${id}`); }
+}
+function filterOrders(q)      { ordFilter.q=q; renderOrders(); }
+function filterOrderStatus(v) { ordFilter.status=v; renderOrders(); }
+function closeOrderModal(e)   { if(e.target===document.getElementById('orderModal')) document.getElementById('orderModal').classList.remove('open'); }
+
+// ──────────────────────────────────────────────
+// PUBLISHED
+// ──────────────────────────────────────────────
+function renderPublished() {
+  const allTags = [...new Set(PUBLISHED.flatMap(p=>p.tags))].sort();
+  const sel = document.getElementById('pubTagFilter');
+  sel.innerHTML = '<option value="all">All (active)</option>'
+    + allTags.map(t=>`<option value="${t}">${t}</option>`).join('')
+    + '<option value="__archived__">📦 Archived</option>';
+
+  const showArchived = pubFilter.tag === '__archived__';
+  const data = PUBLISHED.filter(p=>{
+    const q = pubFilter.q.toLowerCase();
+    const matchQ = !q || p.title.toLowerCase().includes(q);
+    const matchT = showArchived
+      ? p.archived
+      : pubFilter.tag==='all'
+        ? !p.archived
+        : !p.archived && p.tags.includes(pubFilter.tag);
+    return matchQ && matchT;
+  });
+  document.getElementById('pubCount').textContent = `${data.length} post${data.length!==1?'s':''}`;
+  const pal = i => PALETTES[i%PALETTES.length].split(',');
+  document.getElementById('pubGrid').innerHTML = data.map(p=>`
+  <div class="pub-card ${p.archived?'is-archived':''}">
+    <div class="pub-thumb" style="background:linear-gradient(135deg,${pal(p.id)[0]},${pal(p.id)[1]})">${p.title.charAt(0)}</div>
+    <div class="pub-info">
+      <div class="pub-title" title="${p.title}">${p.title}</div>
+      <div class="pub-tags">${p.tags.map(t=>`<span class="tag-chip">${t}</span>`).join('')}</div>
+      <div style="font-size:0.65rem;margin-bottom:0.5rem">
+        ${p.archived
+          ? '<span style="color:var(--text-dim)">📦 Archived</span>'
+          : `<span style="color:var(--text-dim)">♥ ${p.likes} · ${p.type}</span>`}
+      </div>
+      <div class="pub-actions">
+        ${!p.archived ? `<button class="act-btn act-edit" onclick="openEdit('pub',${p.id})">Edit</button>` : ''}
+        ${p.archived
+          ? `<button class="act-btn act-unarchive" onclick="toggleArchivePub(${p.id})">Unarchive</button>`
+          : `<button class="act-btn act-archive"   onclick="toggleArchivePub(${p.id})">Archive</button>`}
+        <button class="act-btn act-delete" onclick="deletePub(${p.id})">Delete</button>
+      </div>
+    </div>
+  </div>`).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;padding:2rem 0">No posts found.</div>';
+}
+function toggleArchivePub(id) {
+  const p = PUBLISHED.find(x=>x.id===id);
+  if (!p) return;
+  p.archived = !p.archived;
+  renderPublished(); renderDashboard();
+  showToast(p.archived ? `📦 "${p.title}" archived` : `✦ "${p.title}" unarchived`);
+}
+function deletePub(id) {
+  if (!confirm('Remove this post from the gallery?')) return;
+  const i = PUBLISHED.findIndex(x=>x.id===id);
+  if (i>-1) { const t=PUBLISHED[i].title; PUBLISHED.splice(i,1); renderPublished(); renderDashboard(); showToast(`Removed "${t}"`); }
+}
+function filterPub(q)    { pubFilter.q=q; renderPublished(); }
+function filterPubTag(v) { pubFilter.tag=v; renderPublished(); }
+
+// ──────────────────────────────────────────────
+// TAGS
+// ──────────────────────────────────────────────
+function renderTags() {
+  document.getElementById('tagsList').innerHTML = ALL_TAGS.map(t=>`
+  <div style="display:flex;align-items:center;gap:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.8rem">
+    <span class="tag-chip" style="margin:0">${t}</span>
+    <button onclick="deleteTag('${t}')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.75rem;transition:color 0.2s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text-dim)'">✕</button>
+  </div>`).join('');
+}
+function addTag() {
+  const val = document.getElementById('newTagInput').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!val) return;
+  if (ALL_TAGS.includes(val)) { showToast('Tag already exists'); return; }
+  ALL_TAGS.push(val); ALL_TAGS.sort();
+  document.getElementById('newTagInput').value = '';
+  renderTags(); showToast(`✦ Tag "${val}" added`);
+}
+function deleteTag(t) {
+  if (!confirm(`Delete tag "${t}"?`)) return;
+  ALL_TAGS = ALL_TAGS.filter(x=>x!==t);
+  renderTags(); showToast(`Tag "${t}" deleted`);
+}
+
+// ──────────────────────────────────────────────
+// EDIT MODAL
+// ──────────────────────────────────────────────
+function openEdit(source, id) {
+  activeEditId = { source, id };
+  let item;
+  if (source === 'sub') item = SUBMISSIONS.find(x=>x.id===id);
+  else item = PUBLISHED.find(x=>x.id===id);
+  if (!item) return;
+  document.getElementById('editModalTitle').textContent = source==='sub' ? 'Edit Submission' : 'Edit Post';
+  document.getElementById('editTitle').value = item.title;
+  document.getElementById('editTags').value  = item.tags.join(', ');
+  document.getElementById('editType').value  = item.type;
+  document.getElementById('editNotes').value = item.notes || '';
+  document.getElementById('editModal').classList.add('open');
+}
+function saveEdit() {
+  const { source, id } = activeEditId;
+  const list = source==='sub' ? SUBMISSIONS : PUBLISHED;
+  const item = list.find(x=>x.id===id);
+  if (!item) return;
+  item.title = document.getElementById('editTitle').value.trim();
+  item.tags  = document.getElementById('editTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  item.type  = document.getElementById('editType').value;
+  item.notes = document.getElementById('editNotes').value.trim();
+  document.getElementById('editModal').classList.remove('open');
+  if (source==='sub') renderSubs(); else renderPublished();
+  showToast(`✦ "${item.title}" updated`);
+}
+function closeEditModal(e) { if(e.target===document.getElementById('editModal')) document.getElementById('editModal').classList.remove('open'); }
+
+// ──────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+function initAll() {
+  renderDashboard();
+  renderSubs();
+  renderOrders();
+  renderPublished();
+  renderTags();
+}
+
+// Auto-login check
+(function() {
+  if (sessionStorage.getItem('admin_auth')==='1') {
+    document.getElementById('loginScreen').classList.add('hidden');
+    initAll();
+  }
+})();
+</script>
+</body>
+</html>
