@@ -1,0 +1,441 @@
+var SUPABASE_URL  = 'https://vgmpkiyxblstqeyucfoq.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbXBraXl4YmxzdHFleXVjZm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Njg4MzAsImV4cCI6MjA5MjE0NDgzMH0.bUCc5Q8Tb5YupPEldlSW8iiuvoPD0elCvUsFiLxwfu0';
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+var SUBS = [], ORDERS = [], POSTS = [];
+var ALL_TAGS = ['candid','studio','outdoor','editorial','bw','ai','video','artistic'];
+var activeOrderId = null;
+var activeEditId  = null;
+var subFilter = {q:'',status:'all'};
+var ordFilter = {q:'',status:'all'};
+var pubFilter = {q:'',tag:'all'};
+var PAL = ['#1e1a16,#2a2016','#16191e,#0f1a22','#1a1620,#22162a','#1e1916,#281e10'];
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+function showAdmin(page) {
+  document.querySelectorAll('.page-admin').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  document.getElementById('admin-' + page).classList.add('active');
+  document.querySelector('[data-page="' + page + '"]').classList.add('active');
+}
+
+async function doLogin() {
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  var result = await sb.auth.signInWithPassword({email: u, password: p});
+  if (result.error) {
+    document.getElementById('loginErr').style.display = 'block';
+  } else {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminUser').textContent = u;
+    await loadAll();
+  }
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function loadAll() {
+  var subsRes   = await sb.from('submissions').select('*').order('created_at', {ascending: false});
+  var ordersRes = await sb.from('orders').select('*').order('created_at', {ascending: false});
+  var postsRes  = await sb.from('posts').select('*').order('created_at', {ascending: false});
+  SUBS   = (subsRes.data   || []).map(function(s){ return Object.assign({}, s, {date: (s.created_at||'').slice(0,10)}); });
+  ORDERS = (ordersRes.data || []).map(function(o){ return Object.assign({}, o, {date: (o.created_at||'').slice(0,10), pkg: o.package}); });
+  POSTS  = postsRes.data || [];
+  renderDashboard();
+  renderSubs();
+  renderOrders();
+  renderPublished();
+  renderTags();
+}
+
+function getStorageUrl(path) {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  return 'https://vgmpkiyxblstqeyucfoq.supabase.co/storage/v1/object/public/media/' + path;
+}
+
+function openReview(id) {
+  var s = SUBS.find(function(x){ return x.id === id; });
+  if (!s) return;
+  var imgUrl = getStorageUrl(s.storage_path);
+  var imgWrap = document.getElementById('reviewImgWrap');
+  var isVideo = s.storage_path && (s.storage_path.toLowerCase().endsWith('.mp4') || s.storage_path.toLowerCase().endsWith('.mov') || s.storage_path.toLowerCase().endsWith('.webm') || (s.type && s.type.toLowerCase().includes('video')));
+  if (imgUrl && isVideo) {
+    imgWrap.innerHTML = '<video controls style="width:100%;max-height:420px;background:#0a0a0a;border-radius:5px 5px 0 0;display:block"><source src="' + imgUrl + '">Your browser does not support video.</video>';
+  } else if (imgUrl) {
+    imgWrap.innerHTML = '<img class="review-img" src="' + imgUrl + '" alt="' + s.title + '">';
+  } else {
+    imgWrap.innerHTML = '<div class="review-img-placeholder">' + s.title.charAt(0) + '</div>';
+  }
+  document.getElementById('reviewTitle').textContent = s.title;
+  document.getElementById('reviewMeta').innerHTML =
+    '<div><span>Type</span><br>' + (s.type || '—') + '</div>' +
+    '<div><span>Submitted</span><br>' + s.date + '</div>' +
+    '<div><span>Status</span><br>' + s.status + '</div>' +
+    '<div><span>Email</span><br>' + (s.email || 'anonymous') + '</div>';
+  document.getElementById('reviewTags').innerHTML = (s.tags||[]).map(function(t){
+    return '<span class="tag-chip">' + t + '</span>';
+  }).join('');
+  var notesEl = document.getElementById('reviewNotes');
+  if (s.notes) { notesEl.textContent = '"' + s.notes + '"'; notesEl.style.display = 'block'; }
+  else { notesEl.style.display = 'none'; }
+  document.getElementById('reviewApproveBtn').onclick = function() {
+    document.getElementById('reviewModal').classList.remove('open');
+    setSubStatus(id, 'approved');
+  };
+  document.getElementById('reviewRejectBtn').onclick = function() {
+    document.getElementById('reviewModal').classList.remove('open');
+    setSubStatus(id, 'rejected');
+  };
+  document.getElementById('reviewArchiveBtn').onclick = function() {
+    document.getElementById('reviewModal').classList.remove('open');
+    toggleArchiveSub(id);
+  };
+  document.getElementById('reviewDeleteBtn').onclick = function() {
+    document.getElementById('reviewModal').classList.remove('open');
+    deleteSub(id);
+  };
+  document.getElementById('reviewModal').classList.add('open');
+}
+
+function renderDashboard() {
+  var pending   = SUBS.filter(function(s){ return s.status==='pending' && !s.archived; }).length;
+  var newOrders = ORDERS.filter(function(o){ return o.status==='new' && !o.archived; }).length;
+  document.getElementById('statPending').textContent   = pending;
+  document.getElementById('statOrders').textContent    = newOrders;
+  document.getElementById('statPublished').textContent = POSTS.filter(function(p){ return !p.archived; }).length;
+  document.getElementById('pendingBadge').textContent  = pending;
+  document.getElementById('orderBadge').textContent    = newOrders;
+  var feed = SUBS.slice(0,3).map(function(s){
+    return '<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem"><span>Submission — <strong>' + s.title + '</strong></span><span style="font-size:0.65rem;color:var(--text-dim)">' + s.date + '</span></div>';
+  });
+  document.getElementById('activityFeed').innerHTML = feed.join('');
+}
+
+function renderSubs() {
+  var data = SUBS.filter(function(s){
+    var q = subFilter.q.toLowerCase();
+    var matchQ = !q || s.title.toLowerCase().indexOf(q) > -1;
+    var matchS = subFilter.status === 'all' ? true :
+      subFilter.status === 'archived' ? s.archived :
+      !s.archived && s.status === subFilter.status;
+    return matchQ && matchS;
+  });
+  document.getElementById('subCount').textContent = data.length + ' result' + (data.length !== 1 ? 's' : '');
+  var html = data.map(function(s){
+    var pal = PAL[s.id % PAL.length].split(',');
+    var tags = (s.tags || []).map(function(t){ return '<span class="tag-chip">' + t + '</span>'; }).join('');
+    var statusPill = s.archived ? '<span class="status-pill archived">Archived</span>' : '<span class="status-pill ' + s.status + '">' + s.status + '</span>';
+    var actions = '';
+    if (!s.archived) {
+      if (s.status === 'pending') {
+        actions += '<button class="act-btn act-approve" onclick="setSubStatus(' + s.id + ',\'approved\')">Approve</button>';
+        actions += '<button class="act-btn act-reject" onclick="setSubStatus(' + s.id + ',\'rejected\')">Reject</button>';
+      } else {
+        actions += '<button class="act-btn act-view" onclick="setSubStatus(' + s.id + ',\'pending\')">Reset</button>';
+      }
+      actions += '<button class="act-btn act-edit" onclick="openEdit(\'sub\',' + s.id + ')">Edit</button>';
+      actions += '<button class="act-btn act-archive" onclick="toggleArchiveSub(' + s.id + ')">Archive</button>';
+    } else {
+      actions += '<button class="act-btn act-unarchive" onclick="toggleArchiveSub(' + s.id + ')">Unarchive</button>';
+    }
+    actions += '<button class="act-btn act-delete" onclick="deleteSub(' + s.id + ')">Delete</button>';
+    return '<tr class="' + (s.archived ? 'is-archived' : '') + '" onclick="openReview(' + s.id + ')" style="cursor:pointer">'
+      + '<td><div class="thumb" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + s.title.charAt(0) + '</div></td>'
+      + '<td><div class="sub-title">' + s.title + '</div><div class="sub-meta">' + (s.email || '') + '</div></td>'
+      + '<td>' + tags + '</td>'
+      + '<td style="font-size:0.75rem;color:var(--ash)">' + s.type + '</td>'
+      + '<td style="font-size:0.72rem;color:var(--text-dim)">' + s.date + '</td>'
+      + '<td>' + statusPill + '</td>'
+      + '<td><div class="action-btns">' + actions + '</div></td>'
+      + '</tr>';
+  }).join('');
+  document.getElementById('subTableBody').innerHTML = html;
+}
+
+async function setSubStatus(id, status) {
+  if (status === 'approved') {
+    var subRes = await sb.from('submissions').select('*').eq('id', id).single();
+    if (subRes.error) { showToast('Error: ' + subRes.error.message); return; }
+    var sub = subRes.data;
+    var insertRes = await sb.from('posts').insert({
+      title: sub.title,
+      type: sub.type || 'AI-Gen',
+      tags: sub.tags || [],
+      likes: 0,
+      archived: false,
+      storage_path: sub.storage_path
+    });
+    if (insertRes.error) { showToast('Insert error: ' + insertRes.error.message); return; }
+    var updateRes = await sb.from('submissions').update({status: 'approved'}).eq('id', id);
+    if (updateRes.error) { showToast('Update error: ' + updateRes.error.message); return; }
+    showToast('Approved and published!');
+  } else {
+    var res = await sb.from('submissions').update({status: status}).eq('id', id);
+    if (res.error) { showToast('Error: ' + res.error.message); return; }
+    showToast('Marked as ' + status);
+  }
+  await loadAll();
+}
+
+async function toggleArchiveSub(id) {
+  var s = SUBS.find(function(x){ return x.id === id; });
+  if (!s) return;
+  s.archived = !s.archived;
+  await sb.from('submissions').update({archived: s.archived}).eq('id', id);
+  await loadAll();
+  showToast(s.archived ? 'Archived' : 'Unarchived');
+}
+
+async function deleteSub(id) {
+  if (!confirm('Delete this submission permanently?')) return;
+  await sb.from('submissions').delete().eq('id', id);
+  await loadAll();
+  showToast('Deleted');
+}
+
+function filterSubs(q)      { subFilter.q = q; renderSubs(); }
+function filterSubStatus(v) { subFilter.status = v; renderSubs(); }
+
+function renderOrders() {
+  var data = ORDERS.filter(function(o){
+    var q = ordFilter.q.toLowerCase();
+    var matchQ = !q || o.email.indexOf(q) > -1 || o.request.toLowerCase().indexOf(q) > -1;
+    var matchS = ordFilter.status === 'all' ? true :
+      ordFilter.status === 'archived' ? o.archived :
+      !o.archived && o.status === ordFilter.status;
+    return matchQ && matchS;
+  });
+  document.getElementById('orderCount').textContent = data.length + ' order' + (data.length !== 1 ? 's' : '');
+  var html = data.map(function(o){
+    var statusPill = o.archived ? '<span class="order-status-pill archived">Archived</span>' : '<span class="order-status-pill ' + o.status + '">' + o.status + '</span>';
+    var archBtn = o.archived
+      ? '<button class="act-btn act-unarchive" onclick="toggleArchiveOrder(\'' + o.id + '\')">Unarchive</button>'
+      : '<button class="act-btn act-archive" onclick="toggleArchiveOrder(\'' + o.id + '\')">Archive</button>';
+    return '<tr class="' + (o.archived ? 'is-archived' : '') + '">'
+      + '<td style="font-size:0.72rem;color:var(--ash)">' + o.id + '</td>'
+      + '<td style="font-size:0.78rem">' + o.email + '</td>'
+      + '<td style="font-size:0.75rem">' + (o.pkg || o.package || '') + ' <span class="price-tag">$' + o.price + '</span></td>'
+      + '<td style="font-size:0.75rem;color:var(--ash);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + o.request + '</td>'
+      + '<td style="font-size:0.72rem;color:var(--text-dim)">' + o.date + '</td>'
+      + '<td>' + statusPill + '</td>'
+      + '<td><div class="action-btns"><button class="act-btn act-view" onclick="openOrderDetail(\'' + o.id + '\')">View</button>' + archBtn + '<button class="act-btn act-delete" onclick="deleteOrder(\'' + o.id + '\')">Delete</button></div></td>'
+      + '</tr>';
+  }).join('');
+  document.getElementById('orderTableBody').innerHTML = html;
+}
+
+function openOrderDetail(id) {
+  var o = ORDERS.find(function(x){ return x.id === id; });
+  if (!o) return;
+  activeOrderId = id;
+  document.getElementById('orderDetail').innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem 2rem;margin-bottom:1rem">'
+    + '<div><span style="color:var(--text-dim)">ID:</span> ' + o.id + '</div>'
+    + '<div><span style="color:var(--text-dim)">Date:</span> ' + o.date + '</div>'
+    + '<div><span style="color:var(--text-dim)">Email:</span> ' + o.email + '</div>'
+    + '<div><span style="color:var(--text-dim)">Amount:</span> <span style="color:var(--gold)">$' + o.price + '</span></div>'
+    + '</div><div style="margin-bottom:0.6rem;color:var(--text-dim)">Request:</div>'
+    + '<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:3px;padding:0.8rem;font-size:0.8rem;line-height:1.6">' + o.request + '</div>';
+  document.getElementById('orderModal').classList.add('open');
+}
+
+async function updateOrderStatus(status) {
+  await sb.from('orders').update({status: status}).eq('id', activeOrderId);
+  document.getElementById('orderModal').classList.remove('open');
+  await loadAll();
+  showToast('Order ' + activeOrderId + ' marked ' + status);
+}
+
+async function toggleArchiveOrder(id) {
+  var o = ORDERS.find(function(x){ return x.id === id; });
+  if (!o) return;
+  o.archived = !o.archived;
+  await sb.from('orders').update({archived: o.archived}).eq('id', id);
+  await loadAll();
+  showToast(o.archived ? 'Archived' : 'Unarchived');
+}
+
+async function deleteOrder(id) {
+  if (!confirm('Delete this order?')) return;
+  await sb.from('orders').delete().eq('id', id);
+  await loadAll();
+  showToast('Deleted');
+}
+
+function filterOrders(q)      { ordFilter.q = q; renderOrders(); }
+function filterOrderStatus(v) { ordFilter.status = v; renderOrders(); }
+
+function renderPublished() {
+  var allTags = [];
+  POSTS.forEach(function(p){ (p.tags||[]).forEach(function(t){ if (allTags.indexOf(t) < 0) allTags.push(t); }); });
+  allTags.sort();
+  var sel = document.getElementById('pubTagFilter');
+  sel.innerHTML = '<option value="all">All (active)</option>'
+    + allTags.map(function(t){ return '<option value="' + t + '">' + t + '</option>'; }).join('')
+    + '<option value="__archived__">Archived</option>';
+
+  var showArchived = pubFilter.tag === '__archived__';
+  var data = POSTS.filter(function(p){
+    var q = pubFilter.q.toLowerCase();
+    var matchQ = !q || p.title.toLowerCase().indexOf(q) > -1;
+    var matchT = showArchived ? p.archived :
+      pubFilter.tag === 'all' ? !p.archived :
+      !p.archived && (p.tags||[]).indexOf(pubFilter.tag) > -1;
+    return matchQ && matchT;
+  });
+  document.getElementById('pubCount').textContent = data.length + ' post' + (data.length !== 1 ? 's' : '');
+  var html = data.map(function(p){
+    var pal = PAL[p.id % PAL.length].split(',');
+    var tags = (p.tags||[]).map(function(t){ return '<span class="tag-chip">' + t + '</span>'; }).join('');
+    var archBtn = p.archived
+      ? '<button class="act-btn act-unarchive" onclick="toggleArchivePub(' + p.id + ')">Unarchive</button>'
+      : '<button class="act-btn act-archive" onclick="toggleArchivePub(' + p.id + ')">Archive</button>';
+    var editBtn = !p.archived ? '<button class="act-btn act-edit" onclick="openEdit(\'pub\',' + p.id + ')">Edit</button>' : '';
+    return '<div class="pub-card' + (p.archived ? ' is-archived' : '') + '">'
+      + '<div class="pub-thumb" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + p.title.charAt(0) + '</div>'
+      + '<div class="pub-info"><div class="pub-title">' + p.title + '</div>'
+      + '<div class="pub-tags">' + tags + '</div>'
+      + '<div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.5rem">' + (p.archived ? 'Archived' : p.likes + ' likes') + '</div>'
+      + '<div class="pub-actions">' + editBtn + archBtn + '<button class="act-btn act-delete" onclick="deletePub(' + p.id + ')">Delete</button></div>'
+      + '</div></div>';
+  }).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;padding:2rem 0">No posts found.</div>';
+  document.getElementById('pubGrid').innerHTML = html;
+}
+
+async function toggleArchivePub(id) {
+  var p = POSTS.find(function(x){ return x.id === id; });
+  if (!p) return;
+  p.archived = !p.archived;
+  await sb.from('posts').update({archived: p.archived}).eq('id', id);
+  await loadAll();
+  showToast(p.archived ? 'Archived' : 'Unarchived');
+}
+
+async function deletePub(id) {
+  if (!confirm('Remove this post from the gallery?')) return;
+  await sb.from('posts').delete().eq('id', id);
+  await loadAll();
+  showToast('Deleted');
+}
+
+function filterPub(q)    { pubFilter.q = q; renderPublished(); }
+function filterPubTag(v) { pubFilter.tag = v; renderPublished(); }
+
+function renderTags() {
+  document.getElementById('tagsList').innerHTML = ALL_TAGS.map(function(t){
+    return '<div style="display:flex;align-items:center;gap:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.8rem">'
+      + '<span class="tag-chip" style="margin:0">' + t + '</span>'
+      + '<button onclick="deleteTag(\'' + t + '\')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.75rem">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function addTag() {
+  var val = document.getElementById('newTagInput').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!val) return;
+  if (ALL_TAGS.indexOf(val) > -1) { showToast('Tag already exists'); return; }
+  ALL_TAGS.push(val); ALL_TAGS.sort();
+  document.getElementById('newTagInput').value = '';
+  renderTags(); showToast('Tag added');
+}
+
+function deleteTag(t) {
+  if (!confirm('Delete tag "' + t + '"?')) return;
+  ALL_TAGS = ALL_TAGS.filter(function(x){ return x !== t; });
+  renderTags(); showToast('Tag deleted');
+}
+
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'npFile') {
+    var f = e.target.files[0];
+    document.getElementById('npFileName').textContent = f ? f.name : '';
+  }
+});
+
+async function createPost() {
+  var title = document.getElementById('npTitle').value.trim();
+  var tags  = document.getElementById('npTags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+  var type  = document.getElementById('npType').value;
+  var file  = document.getElementById('npFile').files[0];
+  var statusEl = document.getElementById('npStatus');
+
+  if (!title) { statusEl.textContent = 'Please add a title.'; return; }
+
+  statusEl.textContent = 'Publishing...';
+
+  var storage_path = null;
+  if (file) {
+    var path = 'posts/' + Date.now() + '_' + file.name;
+    var upRes = await sb.storage.from('media').upload(path, file);
+    if (upRes.error) { statusEl.textContent = 'Upload error: ' + upRes.error.message; return; }
+    storage_path = path;
+  }
+
+  var insertRes = await sb.from('posts').insert({
+    title: title,
+    type: type,
+    tags: tags,
+    likes: 0,
+    archived: false,
+    storage_path: storage_path
+  });
+  if (insertRes.error) { statusEl.textContent = 'Error: ' + insertRes.error.message; return; }
+
+  statusEl.textContent = 'Published!';
+  document.getElementById('npTitle').value = '';
+  document.getElementById('npTags').value = '';
+  document.getElementById('npFile').value = '';
+  document.getElementById('npFileName').textContent = '';
+  await loadAll();
+  showToast('Post published');
+  setTimeout(function(){ statusEl.textContent = ''; }, 3000);
+}
+
+function openEdit(source, id) {
+  activeEditId = {source: source, id: id};
+  var list = source === 'sub' ? SUBS : POSTS;
+  var item = list.find(function(x){ return x.id === id; });
+  if (!item) return;
+  document.getElementById('editModalTitle').textContent = source === 'sub' ? 'Edit Submission' : 'Edit Post';
+  document.getElementById('editTitle').value = item.title;
+  document.getElementById('editTags').value  = (item.tags||[]).join(', ');
+  document.getElementById('editType').value  = item.type;
+  document.getElementById('editNotes').value = item.notes || '';
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function saveEdit() {
+  var source = activeEditId.source;
+  var id     = activeEditId.id;
+  var table  = source === 'sub' ? 'submissions' : 'posts';
+  var list   = source === 'sub' ? SUBS : POSTS;
+  var item   = list.find(function(x){ return x.id === id; });
+  if (!item) return;
+  item.title = document.getElementById('editTitle').value.trim();
+  item.tags  = document.getElementById('editTags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+  item.type  = document.getElementById('editType').value;
+  item.notes = document.getElementById('editNotes').value.trim();
+  await sb.from(table).update({title: item.title, tags: item.tags, type: item.type, notes: item.notes}).eq('id', id);
+  document.getElementById('editModal').classList.remove('open');
+  if (source === 'sub') renderSubs(); else renderPublished();
+  showToast('Saved');
+}
+
+// Init
+(async function() {
+  var sessionRes = await sb.auth.getSession();
+  if (sessionRes.data && sessionRes.data.session) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('adminUser').textContent = sessionRes.data.session.user.email;
+    await loadAll();
+  }
+})();
