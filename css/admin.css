@@ -13,6 +13,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--ink);color:var(--
 .login-box{width:360px;border:1px solid var(--border-strong);border-radius:6px;padding:2.5rem 2rem;background:var(--card);}
 .login-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;letter-spacing:0.25em;color:var(--gold);margin-bottom:0.3rem;}
 .login-logo span{color:var(--paper);font-style:italic;}
+.logo-icon{width:1.2em;height:1.2em;border-radius:50%;vertical-align:middle;margin-right:0.4em;object-fit:cover;}
 .login-sub{font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2rem;}
 .login-field{margin-bottom:1rem;}
 .login-field label{display:block;font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--ash);margin-bottom:0.4rem;}
