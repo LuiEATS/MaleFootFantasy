@@ -549,6 +549,13 @@
     margin-top: 1.8rem;
     font-size: 0.62rem; color: var(--text-dim); line-height: 1.6;
   }
+  @media (max-width: 480px) {
+    .age-gate { padding: 1rem; }
+    .age-gate-box { padding: 2.2rem 1.5rem; }
+    .age-gate-logo { font-size: 1.3rem; letter-spacing: 0.2em; }
+    .age-gate-btns { flex-direction: column; gap: 0.7rem; }
+    .age-btn { width: 100%; padding: 0.8rem 1rem; font-size: 0.68rem; letter-spacing: 0.1em; }
+  }
   @keyframes fadeIn {
     from { opacity: 0; } to { opacity: 1; }
   }
