@@ -41,7 +41,10 @@
 <!-- TOP BAR -->
 <nav class="topbar">
   <div class="logo" onclick="showPage('gallery')"><img src="images/logo.png" alt="" class="logo-icon">male<span>FOOT</span>fantasy</div>
-  <ul class="nav-links">
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleMobileNav()" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links" id="navLinks">
     <li><a onclick="showPage('gallery')">Gallery</a></li>
     <li><a onclick="showPage('submit')">Submit</a></li>
     <li><a onclick="showPage('custom')" class="cta-nav">✦ Custom Order</a></li>

@@ -153,6 +153,19 @@ function showPage(name) {
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
+  closeMobileNav();
+}
+
+function toggleMobileNav() {
+  var open = document.getElementById('navLinks').classList.toggle('open');
+  document.getElementById('hamburgerBtn').classList.toggle('active', open);
+  document.getElementById('hamburgerBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+function closeMobileNav() {
+  document.getElementById('navLinks').classList.remove('open');
+  document.getElementById('hamburgerBtn').classList.remove('active');
+  document.getElementById('hamburgerBtn').setAttribute('aria-expanded', 'false');
 }
 
 function previewTags() {
