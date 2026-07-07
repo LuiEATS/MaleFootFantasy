@@ -75,6 +75,22 @@ function filterGallery() {
   grid.innerHTML = posts.length ? posts.map(renderCard).join('') : '<div class="no-results">No results found</div>';
 }
 
+async function loadTagFilters() {
+  const { data, error } = await sb.from('posts').select('tags').eq('archived', false);
+  if (error) { console.error(error); return; }
+  const tagSet = new Set();
+  (data || []).forEach(function(p){ (p.tags||[]).forEach(function(t){ if (t) tagSet.add(t); }); });
+  renderTagFilters(Array.from(tagSet).sort());
+}
+
+function renderTagFilters(tags) {
+  var container = document.getElementById('tagFilters');
+  container.innerHTML = '<div class="tag-pill' + (activeTag === 'all' ? ' active' : '') + '" data-tag="all" onclick="selectTag(this)">All</div>'
+    + tags.map(function(t){
+        return '<div class="tag-pill' + (activeTag === t ? ' active' : '') + '" data-tag="' + t + '" onclick="selectTag(this)">' + t + '</div>';
+      }).join('');
+}
+
 function selectTag(el) {
   document.querySelectorAll('.tag-pill').forEach(function(p){ p.classList.remove('active'); });
   el.classList.add('active');
@@ -249,4 +265,5 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('ageGate').classList.add('hidden');
   }
   loadPosts();
+  loadTagFilters();
 });

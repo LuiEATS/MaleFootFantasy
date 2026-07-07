@@ -53,6 +53,9 @@
     color: var(--gold);
     text-transform: uppercase;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
   }
   .logo span { color: var(--paper); font-style: italic; }
 
@@ -134,7 +137,8 @@
       border-bottom: 1px solid var(--border-strong) !important;
     }
 
-    .logo { font-size: 1.4rem; letter-spacing: 0.22em; }
+    .logo { font-size: 1.05rem; letter-spacing: 0.12em; }
+    .logo .logo-icon { margin-right: 0.35em; }
 
     .hero { padding: 120px 1.25rem 56px; }
     .filter-bar, .sort-bar, .gallery, .section-heading,
