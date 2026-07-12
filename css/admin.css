@@ -10,7 +10,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--ink);color:var(--
 
 .login-screen{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;padding:1.25rem;}
 .login-screen.hidden{display:none;}
-.login-box{width:100%;max-width:360px;border:1px solid var(--border-strong);border-radius:6px;padding:2.5rem 2rem;background:var(--card);}
+.login-box{width:100%;max-width:460px;border:1px solid var(--border-strong);border-radius:6px;padding:3rem 2.75rem;background:var(--card);}
 .login-logo{font-family:'Cormorant Garamond',serif;font-size:1.3rem;letter-spacing:0.25em;color:var(--gold);margin-bottom:0.3rem;white-space:nowrap;}
 .login-logo span{color:var(--paper);font-style:italic;}
 .login-logo .logo-icon{width:0.85em;height:0.85em;margin-right:0.35em;}
