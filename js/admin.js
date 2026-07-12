@@ -515,6 +515,19 @@ function openEdit(source, id) {
   document.getElementById('editTags').value  = (item.tags||[]).join(', ');
   document.getElementById('editType').value  = item.type;
   document.getElementById('editNotes').value = item.notes || '';
+
+  var previewWrap = document.getElementById('editPreviewWrap');
+  var previewImg  = document.getElementById('editPreviewImg');
+  var imgUrl = getStorageUrl(item.storage_path);
+  var isVideo = item.storage_path && (item.storage_path.toLowerCase().endsWith('.mp4') || item.storage_path.toLowerCase().endsWith('.mov') || item.storage_path.toLowerCase().endsWith('.webm') || (item.type && item.type.toLowerCase().includes('video')));
+  if (imgUrl && !isVideo) {
+    previewImg.src = imgUrl;
+    previewWrap.style.display = 'block';
+  } else {
+    previewWrap.style.display = 'none';
+    previewImg.src = '';
+  }
+
   document.getElementById('editModal').classList.add('open');
 }
 
