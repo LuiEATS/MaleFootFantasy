@@ -15,20 +15,53 @@
   <div class="login-box">
     <div class="login-logo"><img src="images/logo.png" alt="" class="logo-icon">male<span>FOOT</span>fantasy</div>
     <div class="login-sub">Admin Panel</div>
-    <div class="login-field">
-      <label>Email</label>
-      <input type="email" id="loginUser" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+
+    <div id="loginFormFields">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="loginUser" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-err" id="loginErr">Incorrect credentials. Try again.</div>
+      <div class="login-link" onclick="showForgotForm()">Forgot password?</div>
     </div>
-    <div class="login-field">
-      <label>Password</label>
-      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+
+    <div id="forgotFormFields" style="display:none">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="forgotEmail" placeholder="your@email.com" onkeydown="if(event.key==='Enter')sendPasswordReset()">
+      </div>
+      <button class="login-btn" onclick="sendPasswordReset()">Send Reset Link</button>
+      <div class="login-msg" id="forgotMsg"></div>
+      <div class="login-link" onclick="showLoginForm()">Back to sign in</div>
     </div>
-    <button class="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-err" id="loginErr">Incorrect credentials. Try again.</div>
+
+    <div id="resetPasswordFields" style="display:none">
+      <div class="login-sub" style="margin-bottom:1.2rem">Set a New Password</div>
+      <div class="login-field">
+        <label>New Password</label>
+        <input type="password" id="newPass1" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitNewPassword()">
+      </div>
+      <div class="login-field">
+        <label>Confirm Password</label>
+        <input type="password" id="newPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitNewPassword()">
+      </div>
+      <button class="login-btn" onclick="submitNewPassword()">Update Password</button>
+      <div class="login-msg" id="resetMsg"></div>
+    </div>
   </div>
 </div>
 
-<aside class="sidebar">
+<button class="admin-hamburger" id="adminHamburgerBtn" onclick="toggleAdminSidebar()" aria-label="Menu" aria-expanded="false">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeAdminSidebar()"></div>
+
+<aside class="sidebar" id="adminSidebar">
   <div class="sidebar-logo"><img src="images/logo.png" alt="" class="logo-icon">male<span>FOOT</span>fantasy<div class="sidebar-badge">Admin Panel</div></div>
   <nav class="sidebar-nav">
     <div class="nav-item active" onclick="showAdmin('dashboard')" data-page="dashboard"><span class="icon">◈</span> Dashboard</div>
@@ -102,10 +135,10 @@
       </select>
       <span class="count-label" id="subCount"></span>
     </div>
-    <table class="sub-table">
+    <div class="sub-table-wrap"><table class="sub-table">
       <thead><tr><th></th><th>Title</th><th>Tags</th><th>Type</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="subTableBody"></tbody>
-    </table>
+    </table></div>
   </div>
 
   <div id="admin-orders" class="page-admin">
@@ -122,10 +155,10 @@
       </select>
       <span class="count-label" id="orderCount"></span>
     </div>
-    <table class="sub-table">
+    <div class="sub-table-wrap"><table class="sub-table">
       <thead><tr><th>Order</th><th>Email</th><th>Package</th><th>Request</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="orderTableBody"></tbody>
-    </table>
+    </table></div>
   </div>
 
   <div id="admin-published" class="page-admin">

@@ -1,6 +1,3 @@
-var SUPABASE_URL  = 'https://vgmpkiyxblstqeyucfoq.supabase.co';
-var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZnbXBraXl4YmxzdHFleXVjZm9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1Njg4MzAsImV4cCI6MjA5MjE0NDgzMH0.bUCc5Q8Tb5YupPEldlSW8iiuvoPD0elCvUsFiLxwfu0';
-var sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 var SUBS = [], ORDERS = [], POSTS = [];
 var ALL_TAGS = ['candid','studio','outdoor','editorial','bw','ai','video','artistic'];
@@ -23,6 +20,21 @@ function showAdmin(page) {
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
   document.getElementById('admin-' + page).classList.add('active');
   document.querySelector('[data-page="' + page + '"]').classList.add('active');
+  closeAdminSidebar();
+}
+
+function toggleAdminSidebar() {
+  var open = document.getElementById('adminSidebar').classList.toggle('open');
+  document.getElementById('adminHamburgerBtn').classList.toggle('active', open);
+  document.getElementById('adminHamburgerBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+  document.getElementById('sidebarBackdrop').classList.toggle('show', open);
+}
+
+function closeAdminSidebar() {
+  document.getElementById('adminSidebar').classList.remove('open');
+  document.getElementById('adminHamburgerBtn').classList.remove('active');
+  document.getElementById('adminHamburgerBtn').setAttribute('aria-expanded', 'false');
+  document.getElementById('sidebarBackdrop').classList.remove('show');
 }
 
 async function doLogin() {
@@ -37,6 +49,51 @@ async function doLogin() {
     await loadAll();
   }
 }
+
+function showForgotForm() {
+  document.getElementById('loginFormFields').style.display = 'none';
+  document.getElementById('forgotFormFields').style.display = 'block';
+  document.getElementById('resetPasswordFields').style.display = 'none';
+}
+
+function showLoginForm() {
+  document.getElementById('loginFormFields').style.display = 'block';
+  document.getElementById('forgotFormFields').style.display = 'none';
+  document.getElementById('resetPasswordFields').style.display = 'none';
+}
+
+async function sendPasswordReset() {
+  var email = document.getElementById('forgotEmail').value.trim();
+  var msg = document.getElementById('forgotMsg');
+  if (!email) { msg.textContent = 'Enter your email first.'; return; }
+  msg.textContent = 'Sending…';
+  var result = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  msg.textContent = result.error ? ('Error: ' + result.error.message) : 'Check your email for a reset link.';
+}
+
+async function submitNewPassword() {
+  var p1 = document.getElementById('newPass1').value;
+  var p2 = document.getElementById('newPass2').value;
+  var msg = document.getElementById('resetMsg');
+  if (!p1 || p1.length < 6) { msg.textContent = 'Password must be at least 6 characters.'; return; }
+  if (p1 !== p2) { msg.textContent = 'Passwords do not match.'; return; }
+  var result = await sb.auth.updateUser({ password: p1 });
+  if (result.error) {
+    msg.textContent = 'Error: ' + result.error.message;
+  } else {
+    msg.textContent = 'Password updated. Redirecting…';
+    setTimeout(function(){ window.location.href = window.location.origin + window.location.pathname; }, 1200);
+  }
+}
+
+sb.auth.onAuthStateChange(function(event) {
+  if (event === 'PASSWORD_RECOVERY') {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('loginFormFields').style.display = 'none';
+    document.getElementById('forgotFormFields').style.display = 'none';
+    document.getElementById('resetPasswordFields').style.display = 'block';
+  }
+});
 
 async function doLogout() {
   await sb.auth.signOut();
