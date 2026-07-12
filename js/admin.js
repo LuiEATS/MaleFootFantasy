@@ -195,17 +195,17 @@ function renderSubs() {
     var actions = '';
     if (!s.archived) {
       if (s.status === 'pending') {
-        actions += '<button class="act-btn act-approve" onclick="setSubStatus(' + s.id + ',\'approved\')">Approve</button>';
-        actions += '<button class="act-btn act-reject" onclick="setSubStatus(' + s.id + ',\'rejected\')">Reject</button>';
+        actions += '<button class="act-btn act-approve" onclick="event.stopPropagation();setSubStatus(' + s.id + ',\'approved\')">Approve</button>';
+        actions += '<button class="act-btn act-reject" onclick="event.stopPropagation();setSubStatus(' + s.id + ',\'rejected\')">Reject</button>';
       } else {
-        actions += '<button class="act-btn act-view" onclick="setSubStatus(' + s.id + ',\'pending\')">Reset</button>';
+        actions += '<button class="act-btn act-view" onclick="event.stopPropagation();setSubStatus(' + s.id + ',\'pending\')">Reset</button>';
       }
-      actions += '<button class="act-btn act-edit" onclick="openEdit(\'sub\',' + s.id + ')">Edit</button>';
-      actions += '<button class="act-btn act-archive" onclick="toggleArchiveSub(' + s.id + ')">Archive</button>';
+      actions += '<button class="act-btn act-edit" onclick="event.stopPropagation();openEdit(\'sub\',' + s.id + ')">Edit</button>';
+      actions += '<button class="act-btn act-archive" onclick="event.stopPropagation();toggleArchiveSub(' + s.id + ')">Archive</button>';
     } else {
-      actions += '<button class="act-btn act-unarchive" onclick="toggleArchiveSub(' + s.id + ')">Unarchive</button>';
+      actions += '<button class="act-btn act-unarchive" onclick="event.stopPropagation();toggleArchiveSub(' + s.id + ')">Unarchive</button>';
     }
-    actions += '<button class="act-btn act-delete" onclick="deleteSub(' + s.id + ')">Delete</button>';
+    actions += '<button class="act-btn act-delete" onclick="event.stopPropagation();deleteSub(' + s.id + ')">Delete</button>';
     return '<tr class="' + (s.archived ? 'is-archived' : '') + '" onclick="openReview(' + s.id + ')" style="cursor:pointer">'
       + '<td><div class="thumb" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + s.title.charAt(0) + '</div></td>'
       + '<td><div class="sub-title">' + s.title + '</div><div class="sub-meta">' + (s.email || '') + '</div></td>'
@@ -224,6 +224,7 @@ async function setSubStatus(id, status) {
     var subRes = await sb.from('submissions').select('*').eq('id', id).single();
     if (subRes.error) { showToast('Error: ' + subRes.error.message); return; }
     var sub = subRes.data;
+    if (sub.status === 'approved') { showToast('Already approved'); return; }
     var insertRes = await sb.from('posts').insert({
       title: sub.title,
       type: sub.type || 'AI-Gen',
@@ -527,8 +528,13 @@ async function saveEdit() {
   item.title = document.getElementById('editTitle').value.trim();
   item.tags  = document.getElementById('editTags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
   item.type  = document.getElementById('editType').value;
-  item.notes = document.getElementById('editNotes').value.trim();
-  await sb.from(table).update({title: item.title, tags: item.tags, type: item.type, notes: item.notes}).eq('id', id);
+  var payload = {title: item.title, tags: item.tags, type: item.type};
+  if (source === 'sub') {
+    item.notes = document.getElementById('editNotes').value.trim();
+    payload.notes = item.notes;
+  }
+  var res = await sb.from(table).update(payload).eq('id', id);
+  if (res.error) { showToast('Error: ' + res.error.message); return; }
   document.getElementById('editModal').classList.remove('open');
   if (source === 'sub') renderSubs(); else renderPublished();
   showToast('Saved');
