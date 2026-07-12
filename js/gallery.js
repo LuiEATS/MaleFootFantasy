@@ -133,11 +133,14 @@ function openModal(id) {
   var img    = document.getElementById('modalImg');
   if (imgUrl && isVid) {
     img.style.background = '';
+    img.style.height = '';
     img.innerHTML = '<video controls style="width:100%;max-height:600px;background:#0a0a0a;border-radius:5px 5px 0 0;display:block"><source src="' + imgUrl + '"></video>';
   } else if (imgUrl) {
     img.style.background = '';
+    img.style.height = '';
     img.innerHTML = '<img src="' + imgUrl + '" style="width:100%;border-radius:5px 5px 0 0;display:block;max-height:600px;object-fit:contain;background:#0a0a0a">';
   } else {
+    img.style.height = '380px';
     img.style.background = 'linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')';
     img.textContent = post.title.charAt(0);
   }
