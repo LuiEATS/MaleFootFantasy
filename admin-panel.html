@@ -66,6 +66,7 @@
   <nav class="sidebar-nav">
     <div class="nav-item active" onclick="showAdmin('dashboard')" data-page="dashboard"><span class="icon">◈</span> Dashboard</div>
     <div class="nav-item" onclick="showAdmin('newpost')" data-page="newpost"><span class="icon">+</span> New Post</div>
+    <div class="nav-item" onclick="showAdmin('bulk')" data-page="bulk"><span class="icon">⇈</span> Bulk Upload</div>
     <div class="nav-item" onclick="showAdmin('submissions')" data-page="submissions"><span class="icon">⬆</span> Submissions <span class="nav-badge" id="pendingBadge">0</span></div>
     <div class="nav-item" onclick="showAdmin('orders')" data-page="orders"><span class="icon">✦</span> Custom Orders <span class="nav-badge amber" id="orderBadge">0</span></div>
     <div class="nav-item" onclick="showAdmin('published')" data-page="published"><span class="icon">▦</span> Published</div>
@@ -119,6 +120,28 @@
       </div>
       <button class="act-btn act-approve" style="padding:0.7rem 1.4rem;margin-top:0.5rem" onclick="createPost()">Publish Post</button>
       <div id="npStatus" style="font-size:0.78rem;color:var(--ash);margin-top:0.8rem"></div>
+    </div>
+  </div>
+
+  <div id="admin-bulk" class="page-admin">
+    <div class="page-header"><div><h1>Bulk Upload</h1><div class="sub">Upload many photos or videos at once — each becomes a pending submission you can review, retitle, and retag individually</div></div></div>
+    <div style="max-width:560px">
+      <div class="edit-field">
+        <label>Default Type <span style="text-transform:none;letter-spacing:0">(applied to all — editable per item during review)</span></label>
+        <select id="bulkType">
+          <option>AI-Gen</option>
+          <option>Real</option>
+          <option>Video</option>
+          <option>AI-Video</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>Files (images or videos, select multiple)</label>
+        <input type="file" id="bulkFiles" accept="image/*,video/*" multiple onchange="handleBulkFiles(this)">
+        <div id="bulkFileCount" style="font-size:0.72rem;color:var(--text-dim);margin-top:0.4rem"></div>
+      </div>
+      <button class="act-btn act-approve" style="padding:0.7rem 1.4rem;margin-top:0.5rem" onclick="uploadBulkFiles()">Upload All</button>
+      <div id="bulkStatus" style="font-size:0.78rem;color:var(--ash);margin-top:0.8rem;white-space:pre-line"></div>
     </div>
   </div>
 

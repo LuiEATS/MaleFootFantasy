@@ -457,6 +457,53 @@ async function createPost() {
   setTimeout(function(){ statusEl.textContent = ''; }, 3000);
 }
 
+var bulkFileList = [];
+
+function handleBulkFiles(input) {
+  bulkFileList = Array.from(input.files);
+  document.getElementById('bulkFileCount').textContent =
+    bulkFileList.length + ' file' + (bulkFileList.length !== 1 ? 's' : '') + ' selected';
+}
+
+function titleFromFilename(name) {
+  var base = name.replace(/\.[^/.]+$/, '');
+  base = base.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return base || 'Untitled';
+}
+
+async function uploadBulkFiles() {
+  var statusEl = document.getElementById('bulkStatus');
+  if (!bulkFileList.length) { statusEl.textContent = 'Choose files first.'; return; }
+  var type = document.getElementById('bulkType').value;
+  var okCount = 0, failCount = 0;
+
+  for (var i = 0; i < bulkFileList.length; i++) {
+    var file = bulkFileList[i];
+    statusEl.textContent = 'Uploading ' + (i + 1) + ' of ' + bulkFileList.length + ': ' + file.name;
+    var path = 'submissions/' + Date.now() + '_' + i + '_' + file.name;
+    var upRes = await sb.storage.from('media').upload(path, file);
+    if (upRes.error) { failCount++; continue; }
+    var insertRes = await sb.from('submissions').insert({
+      title: titleFromFilename(file.name),
+      email: 'admin-bulk-upload',
+      type: type,
+      tags: [],
+      notes: '',
+      status: 'pending',
+      archived: false,
+      storage_path: path
+    });
+    if (insertRes.error) { failCount++; } else { okCount++; }
+  }
+
+  statusEl.textContent = 'Done: ' + okCount + ' uploaded' + (failCount ? ', ' + failCount + ' failed' : '') + '. Review them in Submissions.';
+  document.getElementById('bulkFiles').value = '';
+  bulkFileList = [];
+  document.getElementById('bulkFileCount').textContent = '';
+  await loadAll();
+  showToast(okCount + ' photo' + (okCount !== 1 ? 's' : '') + ' uploaded for review');
+}
+
 function openEdit(source, id) {
   activeEditId = {source: source, id: id};
   var list = source === 'sub' ? SUBS : POSTS;
