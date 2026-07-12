@@ -47,9 +47,9 @@ function renderCard(post) {
   const imgUrl  = getImageUrl(post.storage_path);
   let imgHtml;
   if (imgUrl && isVideo) {
-    imgHtml = '<video style="width:100%;height:260px;object-fit:cover;display:block" muted playsinline loop onmouseover="this.play()" onmouseout="this.pause()"><source src="' + imgUrl + '"></video><div class="video-badge">&#9654; Video</div>';
+    imgHtml = '<video style="width:100%;display:block" muted playsinline loop onmouseover="this.play()" onmouseout="this.pause()"><source src="' + imgUrl + '"></video><div class="video-badge">&#9654; Video</div>';
   } else if (imgUrl) {
-    imgHtml = '<img class="card-img" src="' + imgUrl + '" alt="' + post.title + '" style="height:260px;object-fit:cover;width:100%">';
+    imgHtml = '<img class="card-img" src="' + imgUrl + '" alt="' + post.title + '">';
   } else {
     imgHtml = '<div class="card-placeholder" style="height:260px;background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + post.title.charAt(0) + '</div>';
   }

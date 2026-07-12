@@ -290,9 +290,8 @@
 
   .card-img-wrap { overflow: hidden; line-height: 0; }
   .card-img {
-    width: 100%; display: block;
+    width: 100%; height: auto; display: block;
     transition: transform 0.5s ease;
-    object-fit: cover;
   }
 
   /* Placeholder images using CSS */
