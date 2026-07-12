@@ -195,14 +195,7 @@
   </div>
 
   <div id="admin-tags" class="page-admin">
-    <div class="page-header"><div><h1>Tags</h1><div class="sub">Manage and create tags</div></div></div>
-    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;align-items:flex-end">
-      <div>
-        <label style="display:block;font-size:0.6rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--ash);margin-bottom:0.4rem">New Tag</label>
-        <input type="text" id="newTagInput" placeholder="e.g. closeup" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--paper);font-family:inherit;font-size:0.82rem;padding:0.6rem 0.85rem;border-radius:3px;outline:none;width:200px">
-      </div>
-      <button class="act-btn act-edit" onclick="addTag()" style="padding:0.6rem 1.2rem">+ Add Tag</button>
-    </div>
+    <div class="page-header"><div><h1>Tags</h1><div class="sub">Tags currently in use across published posts. Deleting one removes it from every post that has it (tags are only edited per-post otherwise, via New Post, Bulk Upload, or Edit).</div></div></div>
     <div id="tagsList" style="display:flex;flex-wrap:wrap;gap:0.6rem"></div>
   </div>
 </main>

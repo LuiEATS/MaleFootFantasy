@@ -1,6 +1,5 @@
 
 var SUBS = [], ORDERS = [], POSTS = [];
-var ALL_TAGS = ['candid','studio','outdoor','editorial','bw','ai','video','artistic'];
 var activeOrderId = null;
 var activeEditId  = null;
 var subFilter = {q:'',status:'all'};
@@ -389,27 +388,31 @@ function filterPub(q)    { pubFilter.q = q; renderPublished(); }
 function filterPubTag(v) { pubFilter.tag = v; renderPublished(); }
 
 function renderTags() {
-  document.getElementById('tagsList').innerHTML = ALL_TAGS.map(function(t){
+  var counts = {};
+  POSTS.forEach(function(p){
+    if (p.archived) return;
+    (p.tags || []).forEach(function(t){ counts[t] = (counts[t] || 0) + 1; });
+  });
+  var tags = Object.keys(counts).sort();
+  document.getElementById('tagsList').innerHTML = tags.length ? tags.map(function(t){
     return '<div style="display:flex;align-items:center;gap:0.5rem;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:0.4rem 0.8rem">'
       + '<span class="tag-chip" style="margin:0">' + t + '</span>'
+      + '<span style="font-size:0.65rem;color:var(--text-dim)">' + counts[t] + '</span>'
       + '<button onclick="deleteTag(\'' + t + '\')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.75rem">✕</button>'
       + '</div>';
-  }).join('');
+  }).join('') : '<div style="color:var(--text-dim);font-size:0.85rem">No tags in use yet.</div>';
 }
 
-function addTag() {
-  var val = document.getElementById('newTagInput').value.trim().toLowerCase().replace(/\s+/g,'-');
-  if (!val) return;
-  if (ALL_TAGS.indexOf(val) > -1) { showToast('Tag already exists'); return; }
-  ALL_TAGS.push(val); ALL_TAGS.sort();
-  document.getElementById('newTagInput').value = '';
-  renderTags(); showToast('Tag added');
-}
-
-function deleteTag(t) {
-  if (!confirm('Delete tag "' + t + '"?')) return;
-  ALL_TAGS = ALL_TAGS.filter(function(x){ return x !== t; });
-  renderTags(); showToast('Tag deleted');
+async function deleteTag(t) {
+  var affected = POSTS.filter(function(p){ return !p.archived && (p.tags || []).indexOf(t) > -1; });
+  if (!affected.length) return;
+  if (!confirm('Remove tag "' + t + '" from ' + affected.length + ' post' + (affected.length !== 1 ? 's' : '') + '?')) return;
+  for (var i = 0; i < affected.length; i++) {
+    var newTags = affected[i].tags.filter(function(x){ return x !== t; });
+    await sb.from('posts').update({tags: newTags}).eq('id', affected[i].id);
+  }
+  await loadAll();
+  showToast('Tag removed from ' + affected.length + ' post' + (affected.length !== 1 ? 's' : ''));
 }
 
 document.addEventListener('change', function(e) {
