@@ -252,6 +252,18 @@ function ageVerify(isAdult) {
   }
 }
 
+let secretClickCount = 0;
+let secretClickTimer = null;
+function handleSecretAdminClick() {
+  secretClickCount++;
+  clearTimeout(secretClickTimer);
+  secretClickTimer = setTimeout(function(){ secretClickCount = 0; }, 1500);
+  if (secretClickCount >= 5) {
+    secretClickCount = 0;
+    window.location.href = 'admin-panel.html';
+  }
+}
+
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg;
