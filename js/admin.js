@@ -119,6 +119,20 @@ function getStorageUrl(path) {
   return 'https://vgmpkiyxblstqeyucfoq.supabase.co/storage/v1/object/public/media/' + path;
 }
 
+async function postToX(title, tags, storagePath) {
+  try {
+    var res = await fetch('/api/post-to-x', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title, tags: tags || [], imageUrl: getStorageUrl(storagePath) })
+    });
+    var data = await res.json();
+    if (!data.ok) { console.warn('X post failed:', data.error); showToast('Published (X post failed — see console)'); }
+  } catch (e) {
+    console.warn('X post error:', e);
+  }
+}
+
 function openReview(id) {
   var s = SUBS.find(function(x){ return x.id === id; });
   if (!s) return;
@@ -235,6 +249,7 @@ async function setSubStatus(id, status) {
     if (insertRes.error) { showToast('Insert error: ' + insertRes.error.message); return; }
     var updateRes = await sb.from('submissions').update({status: 'approved'}).eq('id', id);
     if (updateRes.error) { showToast('Update error: ' + updateRes.error.message); return; }
+    postToX(sub.title, sub.tags, sub.storage_path);
     showToast('Approved and published!');
   } else {
     var res = await sb.from('submissions').update({status: status}).eq('id', id);
@@ -450,6 +465,7 @@ async function createPost() {
     storage_path: storage_path
   });
   if (insertRes.error) { statusEl.textContent = 'Error: ' + insertRes.error.message; return; }
+  postToX(title, tags, storage_path);
 
   statusEl.textContent = 'Published!';
   document.getElementById('npTitle').value = '';
