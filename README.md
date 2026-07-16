@@ -11,7 +11,7 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 - **Database:** Supabase (PostgreSQL)
 - **Storage:** Supabase Storage (bucket: `media`)
 - **Email notifications:** EmailJS
-- **Cross-posting:** X (Twitter) via a Vercel serverless function
+- **Cross-posting:** X (Twitter) and Threads, each via its own Vercel serverless function
 - **Hosting:** Vercel
 - **Domain:** malefootfantasy.com, DNS fully delegated to Vercel nameservers
 
@@ -29,7 +29,8 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 │   ├── gallery.js      # Gallery logic (loading, filtering, likes, modal, submissions/orders forms)
 │   └── admin.js        # Admin panel logic (moderation, CRUD, X cross-posting trigger)
 ├── api/
-│   └── post-to-x.js    # Vercel serverless function — posts a published item to X
+│   ├── post-to-x.js        # Vercel serverless function — posts a published item to X
+│   └── post-to-threads.js  # Vercel serverless function — posts a published item to Threads
 └── README.md
 ```
 
@@ -47,9 +48,9 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 - Custom order form → saves to orders table → email notification to admin
 - Admin panel with login (Supabase Auth), password reset flow, bulk photo upload
 - Review modal: see full image/video before approving/rejecting
-- Approve submission → auto-creates post in gallery → auto-posts to X
+- Approve submission → auto-creates post in gallery → auto-posts to X and Threads
 - Archive system (soft delete, reversible) on posts/submissions/orders
-- Direct post upload from admin (New Post page) → auto-posts to X
+- Direct post upload from admin (New Post page) → auto-posts to X and Threads
 - Ad strip at bottom (dismissible)
 
 ## Credentials & Services
@@ -60,6 +61,9 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 - **X (Twitter) account:** @MaleFootFant — API credentials are set as Vercel environment
   variables (Project Settings → Environment Variables), never in code:
   `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET`
+- **Threads account:** @MaleFootFan — credentials as Vercel environment variables:
+  `THREADS_USER_ID`, `THREADS_ACCESS_TOKEN` (long-lived token from Meta's Threads API;
+  needs periodic renewal since long-lived tokens expire after ~60 days)
 
 ## Deployment
 Push to `main` branch → Vercel auto-deploys (GitHub integration). If a push doesn't
