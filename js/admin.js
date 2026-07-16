@@ -148,6 +148,21 @@ async function postToThreads(title, tags, storagePath) {
   }
 }
 
+async function postToInstagram(title, tags, storagePath) {
+  try {
+    var isVideo = storagePath && (storagePath.toLowerCase().endsWith('.mp4') || storagePath.toLowerCase().endsWith('.mov') || storagePath.toLowerCase().endsWith('.webm'));
+    var res = await fetch('/api/post-to-instagram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: title, tags: tags || [], imageUrl: getStorageUrl(storagePath), isVideo: !!isVideo })
+    });
+    var data = await res.json();
+    if (!data.ok) { console.warn('Instagram post failed:', data.error); showToast('Published (Instagram post failed — see console)'); }
+  } catch (e) {
+    console.warn('Instagram post error:', e);
+  }
+}
+
 function openPreview(source, id) {
   var list = source === 'sub' ? SUBS : POSTS;
   var item = list.find(function(x){ return x.id === id; });
@@ -290,6 +305,7 @@ async function setSubStatus(id, status) {
     if (updateRes.error) { showToast('Update error: ' + updateRes.error.message); return; }
     postToX(sub.title, sub.tags, sub.storage_path);
     postToThreads(sub.title, sub.tags, sub.storage_path);
+    postToInstagram(sub.title, sub.tags, sub.storage_path);
     showToast('Approved and published!');
   } else {
     var res = await sb.from('submissions').update({status: status}).eq('id', id);
@@ -517,6 +533,7 @@ async function createPost() {
   if (insertRes.error) { statusEl.textContent = 'Error: ' + insertRes.error.message; return; }
   postToX(title, tags, storage_path);
   postToThreads(title, tags, storage_path);
+  postToInstagram(title, tags, storage_path);
 
   statusEl.textContent = 'Published!';
   document.getElementById('npTitle').value = '';

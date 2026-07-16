@@ -11,7 +11,7 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 - **Database:** Supabase (PostgreSQL)
 - **Storage:** Supabase Storage (bucket: `media`)
 - **Email notifications:** EmailJS
-- **Cross-posting:** X (Twitter) and Threads, each via its own Vercel serverless function
+- **Cross-posting:** X (Twitter), Threads, and Instagram, each via its own Vercel serverless function
 - **Hosting:** Vercel
 - **Domain:** malefootfantasy.com, DNS fully delegated to Vercel nameservers
 
@@ -29,8 +29,9 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 │   ├── gallery.js      # Gallery logic (loading, filtering, likes, modal, submissions/orders forms)
 │   └── admin.js        # Admin panel logic (moderation, CRUD, X cross-posting trigger)
 ├── api/
-│   ├── post-to-x.js        # Vercel serverless function — posts a published item to X
-│   └── post-to-threads.js  # Vercel serverless function — posts a published item to Threads
+│   ├── post-to-x.js          # Vercel serverless function — posts a published item to X
+│   ├── post-to-threads.js    # Vercel serverless function — posts a published item to Threads
+│   └── post-to-instagram.js  # Vercel serverless function — posts a published item to Instagram
 └── README.md
 ```
 
@@ -48,9 +49,9 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 - Custom order form → saves to orders table → email notification to admin
 - Admin panel with login (Supabase Auth), password reset flow, bulk photo upload
 - Review modal: see full image/video before approving/rejecting
-- Approve submission → auto-creates post in gallery → auto-posts to X and Threads
+- Approve submission → auto-creates post in gallery → auto-posts to X, Threads, and Instagram
 - Archive system (soft delete, reversible) on posts/submissions/orders
-- Direct post upload from admin (New Post page) → auto-posts to X and Threads
+- Direct post upload from admin (New Post page) → auto-posts to X, Threads, and Instagram
 - Ad strip at bottom (dismissible)
 
 ## Credentials & Services
@@ -64,6 +65,10 @@ Adult content gallery platform. Curated AI-generated and real foot-focused conte
 - **Threads account:** @MaleFootFan — credentials as Vercel environment variables:
   `THREADS_USER_ID`, `THREADS_ACCESS_TOKEN` (long-lived token from Meta's Threads API;
   needs periodic renewal since long-lived tokens expire after ~60 days)
+- **Instagram account:** @MaleFootFant — requires the account to be Business/Creator
+  and linked to a Facebook Page. Credentials as Vercel environment variables:
+  `IG_USER_ID`, `IG_ACCESS_TOKEN` (long-lived Page-linked token from the Instagram
+  Graph API; also needs periodic renewal)
 
 ## Deployment
 Push to `main` branch → Vercel auto-deploys (GitHub integration). If a push doesn't
