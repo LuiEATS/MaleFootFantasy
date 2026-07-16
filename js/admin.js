@@ -133,47 +133,71 @@ async function postToX(title, tags, storagePath) {
   }
 }
 
-function openReview(id) {
-  var s = SUBS.find(function(x){ return x.id === id; });
-  if (!s) return;
-  var imgUrl = getStorageUrl(s.storage_path);
+function openPreview(source, id) {
+  var list = source === 'sub' ? SUBS : POSTS;
+  var item = list.find(function(x){ return x.id === id; });
+  if (!item) return;
+
+  var imgUrl = getStorageUrl(item.storage_path);
   var imgWrap = document.getElementById('reviewImgWrap');
-  var isVideo = s.storage_path && (s.storage_path.toLowerCase().endsWith('.mp4') || s.storage_path.toLowerCase().endsWith('.mov') || s.storage_path.toLowerCase().endsWith('.webm') || (s.type && s.type.toLowerCase().includes('video')));
+  var isVideo = item.storage_path && (item.storage_path.toLowerCase().endsWith('.mp4') || item.storage_path.toLowerCase().endsWith('.mov') || item.storage_path.toLowerCase().endsWith('.webm') || (item.type && item.type.toLowerCase().includes('video')));
   if (imgUrl && isVideo) {
     imgWrap.innerHTML = '<video controls style="width:100%;max-height:420px;background:#0a0a0a;border-radius:5px 5px 0 0;display:block"><source src="' + imgUrl + '">Your browser does not support video.</video>';
   } else if (imgUrl) {
-    imgWrap.innerHTML = '<img class="review-img" src="' + imgUrl + '" alt="' + s.title + '">';
+    imgWrap.innerHTML = '<img class="review-img" src="' + imgUrl + '" alt="' + item.title + '">';
   } else {
-    imgWrap.innerHTML = '<div class="review-img-placeholder">' + s.title.charAt(0) + '</div>';
+    imgWrap.innerHTML = '<div class="review-img-placeholder">' + item.title.charAt(0) + '</div>';
   }
-  document.getElementById('reviewTitle').textContent = s.title;
-  document.getElementById('reviewMeta').innerHTML =
-    '<div><span>Type</span><br>' + (s.type || '—') + '</div>' +
-    '<div><span>Submitted</span><br>' + s.date + '</div>' +
-    '<div><span>Status</span><br>' + s.status + '</div>' +
-    '<div><span>Email</span><br>' + (s.email || 'anonymous') + '</div>';
-  document.getElementById('reviewTags').innerHTML = (s.tags||[]).map(function(t){
+  document.getElementById('reviewTitle').textContent = item.title;
+
+  if (source === 'sub') {
+    document.getElementById('reviewMeta').innerHTML =
+      '<div><span>Type</span><br>' + (item.type || '—') + '</div>' +
+      '<div><span>Submitted</span><br>' + item.date + '</div>' +
+      '<div><span>Status</span><br>' + item.status + '</div>' +
+      '<div><span>Email</span><br>' + (item.email || 'anonymous') + '</div>';
+  } else {
+    document.getElementById('reviewMeta').innerHTML =
+      '<div><span>Type</span><br>' + (item.type || '—') + '</div>' +
+      '<div><span>Published</span><br>' + (item.created_at || '').slice(0, 10) + '</div>' +
+      '<div><span>Status</span><br>' + (item.archived ? 'Archived' : 'Live') + '</div>' +
+      '<div><span>Likes</span><br>' + item.likes + '</div>';
+  }
+
+  document.getElementById('reviewTags').innerHTML = (item.tags||[]).map(function(t){
     return '<span class="tag-chip">' + t + '</span>';
   }).join('');
   var notesEl = document.getElementById('reviewNotes');
-  if (s.notes) { notesEl.textContent = '"' + s.notes + '"'; notesEl.style.display = 'block'; }
+  if (item.notes) { notesEl.textContent = '"' + item.notes + '"'; notesEl.style.display = 'block'; }
   else { notesEl.style.display = 'none'; }
-  document.getElementById('reviewApproveBtn').onclick = function() {
+
+  var approveBtn = document.getElementById('reviewApproveBtn');
+  var rejectBtn  = document.getElementById('reviewRejectBtn');
+  var archiveBtn = document.getElementById('reviewArchiveBtn');
+  var editBtn    = document.getElementById('reviewEditBtn');
+  var deleteBtn  = document.getElementById('reviewDeleteBtn');
+
+  editBtn.onclick = function() {
     document.getElementById('reviewModal').classList.remove('open');
-    setSubStatus(id, 'approved');
+    openEdit(source, id);
   };
-  document.getElementById('reviewRejectBtn').onclick = function() {
-    document.getElementById('reviewModal').classList.remove('open');
-    setSubStatus(id, 'rejected');
-  };
-  document.getElementById('reviewArchiveBtn').onclick = function() {
-    document.getElementById('reviewModal').classList.remove('open');
-    toggleArchiveSub(id);
-  };
-  document.getElementById('reviewDeleteBtn').onclick = function() {
-    document.getElementById('reviewModal').classList.remove('open');
-    deleteSub(id);
-  };
+
+  if (source === 'sub') {
+    approveBtn.style.display = '';
+    rejectBtn.style.display = '';
+    archiveBtn.textContent = 'Archive';
+    approveBtn.onclick = function() { document.getElementById('reviewModal').classList.remove('open'); setSubStatus(id, 'approved'); };
+    rejectBtn.onclick  = function() { document.getElementById('reviewModal').classList.remove('open'); setSubStatus(id, 'rejected'); };
+    archiveBtn.onclick = function() { document.getElementById('reviewModal').classList.remove('open'); toggleArchiveSub(id); };
+    deleteBtn.onclick  = function() { document.getElementById('reviewModal').classList.remove('open'); deleteSub(id); };
+  } else {
+    approveBtn.style.display = 'none';
+    rejectBtn.style.display = 'none';
+    archiveBtn.textContent = item.archived ? 'Unarchive' : 'Archive';
+    archiveBtn.onclick = function() { document.getElementById('reviewModal').classList.remove('open'); toggleArchivePub(id); };
+    deleteBtn.onclick  = function() { document.getElementById('reviewModal').classList.remove('open'); deletePub(id); };
+  }
+
   document.getElementById('reviewModal').classList.add('open');
 }
 
@@ -219,7 +243,7 @@ function renderSubs() {
       actions += '<button class="act-btn act-unarchive" onclick="event.stopPropagation();toggleArchiveSub(' + s.id + ')">Unarchive</button>';
     }
     actions += '<button class="act-btn act-delete" onclick="event.stopPropagation();deleteSub(' + s.id + ')">Delete</button>';
-    return '<tr class="' + (s.archived ? 'is-archived' : '') + '" onclick="openReview(' + s.id + ')" style="cursor:pointer">'
+    return '<tr class="' + (s.archived ? 'is-archived' : '') + '" onclick="openPreview(\'sub\',' + s.id + ')" style="cursor:pointer">'
       + '<td><div class="thumb" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + s.title.charAt(0) + '</div></td>'
       + '<td><div class="sub-title">' + s.title + '</div><div class="sub-meta">' + (s.email || '') + '</div></td>'
       + '<td>' + tags + '</td>'
@@ -369,15 +393,25 @@ function renderPublished() {
     var pal = PAL[p.id % PAL.length].split(',');
     var tags = (p.tags||[]).map(function(t){ return '<span class="tag-chip">' + t + '</span>'; }).join('');
     var archBtn = p.archived
-      ? '<button class="act-btn act-unarchive" onclick="toggleArchivePub(' + p.id + ')">Unarchive</button>'
-      : '<button class="act-btn act-archive" onclick="toggleArchivePub(' + p.id + ')">Archive</button>';
-    var editBtn = !p.archived ? '<button class="act-btn act-edit" onclick="openEdit(\'pub\',' + p.id + ')">Edit</button>' : '';
-    return '<div class="pub-card' + (p.archived ? ' is-archived' : '') + '">'
-      + '<div class="pub-thumb" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + p.title.charAt(0) + '</div>'
+      ? '<button class="act-btn act-unarchive" onclick="event.stopPropagation();toggleArchivePub(' + p.id + ')">Unarchive</button>'
+      : '<button class="act-btn act-archive" onclick="event.stopPropagation();toggleArchivePub(' + p.id + ')">Archive</button>';
+    var editBtn = !p.archived ? '<button class="act-btn act-edit" onclick="event.stopPropagation();openEdit(\'pub\',' + p.id + ')">Edit</button>' : '';
+    var imgUrl = getStorageUrl(p.storage_path);
+    var isVideo = p.storage_path && (p.storage_path.toLowerCase().endsWith('.mp4') || p.storage_path.toLowerCase().endsWith('.mov') || p.storage_path.toLowerCase().endsWith('.webm') || (p.type && p.type.toLowerCase().includes('video')));
+    var thumbHtml;
+    if (imgUrl && isVideo) {
+      thumbHtml = '<video class="pub-thumb" src="' + imgUrl + '" muted playsinline></video>';
+    } else if (imgUrl) {
+      thumbHtml = '<img class="pub-thumb" src="' + imgUrl + '" alt="' + p.title + '">';
+    } else {
+      thumbHtml = '<div class="pub-thumb" style="background:linear-gradient(135deg,' + pal[0] + ',' + pal[1] + ')">' + p.title.charAt(0) + '</div>';
+    }
+    return '<div class="pub-card' + (p.archived ? ' is-archived' : '') + '" onclick="openPreview(\'pub\',' + p.id + ')" style="cursor:pointer">'
+      + thumbHtml
       + '<div class="pub-info"><div class="pub-title">' + p.title + '</div>'
       + '<div class="pub-tags">' + tags + '</div>'
       + '<div style="font-size:0.65rem;color:var(--text-dim);margin-bottom:0.5rem">' + (p.archived ? 'Archived' : p.likes + ' likes') + '</div>'
-      + '<div class="pub-actions">' + editBtn + archBtn + '<button class="act-btn act-delete" onclick="deletePub(' + p.id + ')">Delete</button></div>'
+      + '<div class="pub-actions">' + editBtn + archBtn + '<button class="act-btn act-delete" onclick="event.stopPropagation();deletePub(' + p.id + ')">Delete</button></div>'
       + '</div></div>';
   }).join('') || '<div style="color:var(--text-dim);font-size:0.85rem;padding:2rem 0">No posts found.</div>';
   document.getElementById('pubGrid').innerHTML = html;
