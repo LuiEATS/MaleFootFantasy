@@ -47,7 +47,7 @@
   <ul class="nav-links" id="navLinks">
     <li><a onclick="showPage('gallery')">Gallery</a></li>
     <li><a onclick="showPage('submit')">Submit</a></li>
-    <li><a onclick="showPage('custom')" class="cta-nav">✦ Custom Order</a></li>
+    <li><a onclick="showPage('takedown')">Take Down Request</a></li>
   </ul>
 </nav>
 
@@ -149,82 +149,43 @@
   </div>
 </div>
 
-<!-- ══════════ CUSTOM ORDER PAGE ══════════ -->
-<div id="page-custom" class="page">
+<!-- ══════════ TAKE DOWN REQUEST PAGE ══════════ -->
+<div id="page-takedown" class="page">
   <div class="hero">
-    <p class="hero-eyebrow">✦ Bespoke Service</p>
-    <h1>Custom <em>Generation</em></h1>
+    <p class="hero-eyebrow">✦ Content Rights</p>
+    <h1>Take Down <em>Request</em></h1>
     <div class="hero-divider"></div>
-    <p>Upload a reference photo and describe what you want. We'll generate a curated set of images tailored to your request.</p>
+    <p>We make every effort to give credit to the original creators of the content we feature. If you see a photo or video of your own here, please let us know — we're happy to add or change credit, or take it down entirely if that's what you'd prefer.</p>
   </div>
   <div class="submit-section">
     <div class="form-card">
-      <h3>Your Request</h3>
-      <p class="form-desc">All custom orders are handled discreetly. Turnaround is typically 24–72 hours.</p>
-      <div class="price-badge">Custom generation — starting from <span class="price" style="margin-left:0.3rem">$12</span> / set</div>
+      <h3>Submit a Request</h3>
+      <p class="form-desc">Tell us which post this is about and what you'd like us to do. We respond as quickly as we can.</p>
       <div class="form-group">
-        <label>Reference Photo (optional)</label>
-        <div class="drop-zone" onclick="document.getElementById('refInput').click()">
-          <div class="dz-icon">📷</div>
-          <p>Upload a reference for style, pose, or look</p>
-          <input type="file" id="refInput" accept="image/*" style="display:none" onchange="handleRef(this)">
-        </div>
-        <div id="refPreview"></div>
+        <label>Link or description of the content</label>
+        <input type="text" id="tdContent" placeholder="Post title, URL, or a description that helps us find it">
       </div>
       <div class="form-group">
-        <label>Package</label>
-        <select id="packageSelect" onchange="updatePrice()">
-          <option value="12">Starter — 3 images ($12)</option>
-          <option value="22">Standard — 6 images ($22)</option>
-          <option value="38">Premium — 12 images ($38)</option>
-          <option value="65">Exclusive — 20 images + variations ($65)</option>
+        <label>What would you like?</label>
+        <select id="tdAction">
+          <option>Add or change credit</option>
+          <option>Remove this content</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Style / Mood</label>
-        <input type="text" id="orderStyle" placeholder="e.g. Editorial, dark studio, natural light…">
-      </div>
-      <div class="form-group">
-        <label>Detailed Request</label>
-        <textarea id="orderRequest" rows="5" placeholder="Describe exactly what you're looking for…"></textarea>
+        <label>Details</label>
+        <textarea id="tdDetails" rows="4" placeholder="How you'd like to be credited, or any other context…"></textarea>
       </div>
       <div class="form-group">
         <label>Your Email</label>
-        <input type="email" id="orderEmail" placeholder="Where we'll deliver your images">
+        <input type="email" id="tdEmail" placeholder="So we can follow up">
       </div>
-      <div style="background:rgba(184,150,62,0.06);border:1px solid var(--border);border-radius:4px;padding:1rem;margin-bottom:1.2rem;font-size:0.78rem;color:var(--ash);line-height:1.6">
-        Total: <strong id="priceDisplay" style="color:var(--gold-light);font-size:1.1rem">$12</strong><br>
-        <span style="font-size:0.7rem">Payment via Segpay at next step. Full refund if we can't fulfil your request.</span>
-      </div>
-      <button class="submit-btn primary" onclick="submitOrder()">Continue to Payment →</button>
+      <button class="submit-btn primary" onclick="submitTakedown()">Send Request</button>
     </div>
     <div>
-      <div class="form-card" style="margin-bottom:1.5rem">
-        <h3>How It Works</h3>
-        <p class="form-desc" style="margin-bottom:1.2rem">A simple 3-step process.</p>
-        <div style="display:flex;flex-direction:column;gap:1.2rem">
-          <div style="display:flex;gap:1rem;align-items:flex-start">
-            <div style="width:28px;height:28px;border:1px solid var(--border-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--gold);flex-shrink:0">1</div>
-            <div><div style="font-size:0.8rem;margin-bottom:0.2rem">Submit your request</div><div style="font-size:0.72rem;color:var(--ash)">Fill the form with your preferences and reference.</div></div>
-          </div>
-          <div style="display:flex;gap:1rem;align-items:flex-start">
-            <div style="width:28px;height:28px;border:1px solid var(--border-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--gold);flex-shrink:0">2</div>
-            <div><div style="font-size:0.8rem;margin-bottom:0.2rem">Pay securely</div><div style="font-size:0.72rem;color:var(--ash)">Segpay checkout. Refunded in full if we can't deliver.</div></div>
-          </div>
-          <div style="display:flex;gap:1rem;align-items:flex-start">
-            <div style="width:28px;height:28px;border:1px solid var(--border-strong);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--gold);flex-shrink:0">3</div>
-            <div><div style="font-size:0.8rem;margin-bottom:0.2rem">Receive your set</div><div style="font-size:0.72rem;color:var(--ash)">Delivered privately by email within 24–72h.</div></div>
-          </div>
-        </div>
-      </div>
       <div class="form-card">
-        <h3>Packages</h3>
-        <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:0.8rem">
-          <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0;border-bottom:1px solid var(--border)"><span>Starter</span><span style="color:var(--gold)">3 images — $12</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0;border-bottom:1px solid var(--border)"><span>Standard</span><span style="color:var(--gold)">6 images — $22</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0;border-bottom:1px solid var(--border)"><span>Premium</span><span style="color:var(--gold)">12 images — $38</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding:0.5rem 0"><span>Exclusive</span><span style="color:var(--gold)">20+ — $65</span></div>
-        </div>
+        <h3>Our Commitment</h3>
+        <p class="form-desc" style="margin-bottom:0">We take credit and take-down requests seriously. Verified requests are typically resolved within 48 hours.</p>
       </div>
     </div>
   </div>

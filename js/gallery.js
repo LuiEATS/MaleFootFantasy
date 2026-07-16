@@ -198,20 +198,6 @@ function handleFiles(input) {
   document.getElementById('fileList').innerHTML = names.map(function(n){ return '<div>&#10003; ' + n + '</div>'; }).join('');
 }
 
-function handleRef(input) {
-  var file = input.files[0];
-  if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    document.getElementById('refPreview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;border-radius:4px;margin-top:0.5rem;border:1px solid var(--border)">';
-  };
-  reader.readAsDataURL(file);
-}
-
-function updatePrice() {
-  document.getElementById('priceDisplay').textContent = '$' + document.getElementById('packageSelect').value;
-}
-
 async function submitContent() {
   var title = document.getElementById('subTitle').value.trim();
   var tags  = document.getElementById('tagInput').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
@@ -233,17 +219,17 @@ async function submitContent() {
   showToast('Submitted! We\'ll review within 48h.');
 }
 
-async function submitOrder() {
-  var email   = document.getElementById('orderEmail').value.trim();
-  var request = document.getElementById('orderRequest').value.trim();
-  var pkg     = document.getElementById('packageSelect').selectedOptions[0].text;
-  var price   = parseInt(document.getElementById('packageSelect').value);
-  if (!email || !request) { showToast('Please fill in email and request'); return; }
-  var orderId = 'ORD-' + Date.now();
-  var res = await sb.from('orders').insert({ id: orderId, email: email, package: pkg, price: price, request: request, status: 'new' });
-  if (res.error) { showToast('Something went wrong.'); return; }
-  emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { title: 'Custom Order - ' + pkg, type: 'Paid Order', tags: '$' + price, notes: request }).catch(function(e){ console.log('Email error:', e); });
-  showToast('Request received - you will hear from us soon!');
+async function submitTakedown() {
+  var content = document.getElementById('tdContent').value.trim();
+  var action  = document.getElementById('tdAction').value;
+  var details = document.getElementById('tdDetails').value.trim();
+  var email   = document.getElementById('tdEmail').value.trim();
+  if (!content || !email) { showToast('Please fill in the content and your email'); return; }
+  emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, { title: 'Take Down Request - ' + action, type: email, tags: content, notes: details || 'none' }).catch(function(e){ console.log('Email error:', e); });
+  showToast('Request received - we\'ll follow up by email.');
+  document.getElementById('tdContent').value = '';
+  document.getElementById('tdDetails').value = '';
+  document.getElementById('tdEmail').value = '';
 }
 
 function ageVerify(isAdult) {
