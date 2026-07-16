@@ -104,6 +104,7 @@ module.exports = async function handler(req, res) {
     var tweet = await postTweet(text, mediaId, tokens);
     res.status(200).json({ ok: true, tweet: tweet });
   } catch (err) {
+    console.error('post-to-x failed:', err);
     res.status(500).json({ ok: false, error: err.message });
   }
 };
