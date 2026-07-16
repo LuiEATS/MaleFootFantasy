@@ -128,7 +128,7 @@ tr.is-archived td{opacity:0.45;}
 .review-meta span{color:var(--text-dim);font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;}
 .review-tags{display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:1rem;}
 .review-notes{font-size:0.78rem;color:var(--ash);font-style:italic;padding:0.8rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:3px;margin-bottom:1.4rem;}
-.review-actions{display:flex;gap:0.8rem;justify-content:flex-end;}
+.review-actions{display:flex;gap:0.8rem;justify-content:flex-end;flex-wrap:wrap;}
 .modal-box{background:var(--card2);border:1px solid var(--border-strong);border-radius:6px;max-width:540px;width:100%;padding:2rem;position:relative;animation:slideUp 0.25s ease;}
 .modal-box h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;margin-bottom:1rem;}
 .modal-close-btn{position:absolute;top:1rem;right:1rem;background:none;border:1px solid var(--border);color:var(--ash);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;}
